@@ -1,14 +1,30 @@
+@import '@fontsource-variable/instrument-sans/wdth.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
-body { @apply text-slate-800 antialiased; font-feature-settings: 'cv11', 'ss01'; }
+body { @apply bg-paper text-slate-800 antialiased; font-feature-settings: 'tnum' 0; }
+/* Condensed numerals: temperatures and counts read like a monitor readout */
+.cond { font-stretch: 78%; font-feature-settings: 'tnum' 1; letter-spacing: -0.01em; }
+.tabular-nums { font-feature-settings: 'tnum' 1; }
+/* Chart-paper grid, the visual signature (used sparingly) */
+.chart-paper {
+  background-color: #FBFCFE;
+  background-image:
+    linear-gradient(#E6ECF5 1px, transparent 1px), linear-gradient(90deg, #E6ECF5 1px, transparent 1px),
+    linear-gradient(#F0F3F8 1px, transparent 1px), linear-gradient(90deg, #F0F3F8 1px, transparent 1px);
+  background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
+}
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { scrollbar-width: none; }
-@keyframes slidein { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
-@keyframes rise { from { transform: translateY(12px); opacity: 0 } to { transform: none; opacity: 1 } }
+:focus-visible { outline: 2px solid #3F66EC; outline-offset: 2px; }
+@keyframes slidein { from { transform: translateX(16px); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes rise { from { transform: translateY(8px); opacity: 0 } to { transform: none; opacity: 1 } }
 @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
-.anim-slide { animation: slidein .22s ease-out; }
-.anim-rise { animation: rise .22s ease-out; }
-.anim-fade { animation: fade .18s ease-out; }
+@keyframes tick { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+.anim-slide { animation: slidein .2s ease-out; }
+.anim-rise { animation: rise .18s ease-out; }
+.anim-fade { animation: fade .15s ease-out; }
+.anim-tick > * { transform-origin: bottom; animation: tick .5s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

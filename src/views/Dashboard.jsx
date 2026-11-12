@@ -29,30 +29,30 @@ export default function Dashboard({ openPatient, go }) {
   return (
     <div className="space-y-4">
       {/* Benchmark hero */}
-      <Card className={cx('p-5 ring-0 text-white', ok ? 'bg-gradient-to-br from-brand-700 to-brand-900' : 'bg-gradient-to-br from-rose-600 to-rose-800')}>
+      <div className={cx('rounded-xl p-6 text-white', ok ? 'bg-brand-800' : 'bg-rose-700')}>
         <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr_1fr] items-center">
           <div>
             <p className="text-sm font-medium text-white/70 flex items-center gap-2"><ShieldCheck size={16} /> Treatment quality vs benchmark</p>
-            <p className="text-4xl font-bold mt-1 tabular-nums">{stats.recovery.toFixed(1)}%<span className="text-lg font-medium text-white/70"> recovery</span></p>
+            <p className="cond text-[64px] leading-none font-semibold mt-2">{stats.recovery.toFixed(1)}%</p><p className="text-white/80 text-sm mt-1">of closed cases recovered</p>
             <p className="text-sm text-white/80 mt-1">{ok ? `Within target. Benchmark is ≥ ${100 - RULES.MORTALITY_LIMIT}% recovery (≤ ${RULES.MORTALITY_LIMIT}% mortality).` : `Below the ${100 - RULES.MORTALITY_LIMIT}% target. Review treatment protocols.`}</p>
             <div className="mt-3 h-2.5 rounded-full bg-white/15 relative overflow-hidden">
-              <div className="h-full bg-white rounded-full" style={{ width: `${stats.recovery}%` }} />
-              <div className="absolute top-0 bottom-0 w-0.5 bg-amber-300" style={{ left: `${100 - RULES.MORTALITY_LIMIT}%` }} />
+              <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${stats.recovery}%` }} />
+              <div className="absolute -top-1 -bottom-1 w-0.5 bg-white" style={{ left: `${100 - RULES.MORTALITY_LIMIT}%` }} />
             </div>
-            <p className="text-[11px] text-white/60 mt-1">Yellow marker = {100 - RULES.MORTALITY_LIMIT}% target · {stats.closed.length} closed cases</p>
+            <p className="text-[11px] text-white/60 mt-1">White line marks the {100 - RULES.MORTALITY_LIMIT}% target · {stats.closed.length} closed cases</p>
           </div>
-          <div className="rounded-xl bg-white/10 p-4">
+          <div className="rounded-lg bg-white/[.07] p-4">
             <p className="text-xs text-white/70">Mortality (all time)</p>
-            <p className="text-2xl font-bold tabular-nums">{stats.mortality.toFixed(1)}%</p>
+            <p className="cond text-[36px] leading-none font-semibold mt-1">{stats.mortality.toFixed(1)}%</p>
             <p className="text-xs text-white/70">{stats.deceased} deaths · {stats.recovered} recovered</p>
           </div>
-          <div className={cx('rounded-xl p-4', stats.recentMortality > RULES.MORTALITY_LIMIT ? 'bg-amber-400/25 ring-1 ring-amber-300/60' : 'bg-white/10')}>
+          <div className={cx('rounded-xl p-4', stats.recentMortality > RULES.MORTALITY_LIMIT ? 'bg-rose-500/20 ring-1 ring-rose-300/50' : 'bg-white/[.07]')}>
             <p className="text-xs text-white/70">Mortality (last 7 days)</p>
-            <p className="text-2xl font-bold tabular-nums flex items-center gap-2">{stats.recentMortality.toFixed(1)}% {recUp ? <TrendingUp size={18} className="text-amber-200" /> : <TrendingDown size={18} className="text-emerald-200" />}</p>
+            <p className="cond text-[36px] leading-none font-semibold mt-1 flex items-center gap-2">{stats.recentMortality.toFixed(1)}% {recUp ? <TrendingUp size={18} className="text-amber-200" /> : <TrendingDown size={18} className="text-emerald-200" />}</p>
             <p className="text-xs text-white/70">{stats.recentCount} cases closed{stats.recentMortality > RULES.MORTALITY_LIMIT && ' · above limit'}</p>
           </div>
         </div>
-      </Card>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Stat label="Bed occupancy" value={`${stats.occupied}/${RULES.CAPACITY}`} sub={`${state.waitlist.length} on waiting list`} icon={BedDouble} tone="brand"><Progress value={stats.occupied} max={RULES.CAPACITY} /></Stat>
@@ -74,10 +74,10 @@ export default function Dashboard({ openPatient, go }) {
                 <YAxis yAxisId="p" orientation="right" domain={[0, 40]} tickFormatter={(v) => v + '%'} tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v, n) => (n === 'Mortality %' ? [v == null ? 'n/a' : v + '%', n] : [v, n])} labelFormatter={(l) => 'Week of ' + l} />
                 <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-                <Bar yAxisId="n" dataKey="recovered" name="Recovered" stackId="a" fill="#2bbcab" radius={[0, 0, 0, 0]} />
-                <Bar yAxisId="n" dataKey="deceased" name="Deceased" stackId="a" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="n" dataKey="recovered" name="Recovered" stackId="a" fill="#14213D" radius={[0, 0, 0, 0]} />
+                <Bar yAxisId="n" dataKey="deceased" name="Deceased" stackId="a" fill="#E5483B" radius={[4, 4, 0, 0]} />
                 <ReferenceLine yAxisId="p" y={RULES.MORTALITY_LIMIT} stroke="#e11d48" strokeDasharray="4 4" label={{ value: `${RULES.MORTALITY_LIMIT}% limit`, position: 'insideTopLeft', fontSize: 10, fill: '#be123c' }} />
-                <Line yAxisId="p" dataKey="mortality" name="Mortality %" stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3.5, fill: '#fff', strokeWidth: 2 }} connectNulls isAnimationActive={false} />
+                <Line yAxisId="p" dataKey="mortality" name="Mortality %" stroke="#E5483B" strokeWidth={2.5} dot={{ r: 3.5, fill: '#fff', strokeWidth: 2 }} connectNulls isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -100,8 +100,8 @@ export default function Dashboard({ openPatient, go }) {
                 <YAxis domain={[50, 100]} tickFormatter={(v) => v + '%'} tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v) => v + '%'} />
                 <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-                <Line dataKey="temps" name="Temperatures" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-                <Line dataKey="visits" name="Doctor visits" stroke="#0ea5e9" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line dataKey="temps" name="Temperatures" stroke="#14213D" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line dataKey="visits" name="Doctor visits" stroke="#3F66EC" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

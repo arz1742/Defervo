@@ -40,7 +40,7 @@ export default function PatientDrawer({ pid, onClose }) {
   return (
     <Drawer open onClose={onClose}>
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-200 px-5 py-4 flex items-start gap-4">
-        <div className="h-12 w-12 rounded-xl bg-brand-50 text-brand-700 grid place-items-center font-bold shrink-0">{bed ? bedLabel(bed) : '—'}</div>
+        <div className="cond h-12 w-12 rounded-md bg-brand-800 text-white grid place-items-center text-lg font-semibold shrink-0">{bed ? bedLabel(bed) : '—'}</div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-slate-900 truncate">{p.name}</h2>
@@ -57,7 +57,7 @@ export default function PatientDrawer({ pid, onClose }) {
         {/* Today */}
         {active && (
           <Card className="p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Today · {fmtDay(state.today)}</p>
+            <p className="text-sm font-semibold text-brand-800 mb-3">Today, {fmtDay(state.today)}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className={cx('rounded-lg p-3 ring-1', d.temp ? 'bg-emerald-50/50 ring-emerald-200' : 'bg-amber-50/60 ring-amber-200')}>
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Thermometer size={16} /> 1 · Temperature</div>

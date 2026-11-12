@@ -1,13 +1,21 @@
+/** Defervo design tokens. Hospital fever-chart language: chart paper, ink, signal red. */
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
-      fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['"Instrument Sans Variable"', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
       colors: {
-        brand: { 50:'#effcf9',100:'#c9f5ec',200:'#94e9da',300:'#58d6c4',400:'#2bbcab',500:'#139f91',600:'#0d8077',700:'#0f6661',800:'#11514e',900:'#124442' },
+        // Ink: primary text, primary actions, structure
+        brand: { 50: '#EEF2F8', 100: '#DCE3EF', 200: '#B8C5DC', 300: '#8B9DBD', 400: '#5D7299', 500: '#3E5379', 600: '#263B62', 700: '#1C2D4D', 800: '#14213D', 900: '#0E172B' },
+        // "Ready to go home" blue (discharge pipeline), replaces the default violet
+        violet: { 50: '#EEF3FF', 100: '#DDE7FF', 200: '#BCCEFF', 300: '#91AEFC', 400: '#6287F6', 500: '#3F66EC', 600: '#2D4FD6', 700: '#2540AE', 800: '#22388A', 900: '#20326E' },
+        paper: '#F4F6FA',
+        rule: '#DDE3EC',
+        grid: '#E3E9F2',
       },
-      boxShadow: { card: '0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)' },
+      borderRadius: { DEFAULT: '6px', lg: '8px', xl: '10px', '2xl': '14px' },
+      boxShadow: { card: '0 0 0 0 transparent', pop: '0 12px 32px -12px rgba(20,33,61,.28), 0 2px 6px rgba(20,33,61,.08)' },
     },
   },
   plugins: [],

@@ -1,66 +1,125 @@
-import { Thermometer, Stethoscope, BedDouble, LayoutDashboard, ArrowRight, ShieldCheck } from 'lucide-react'
+import { useMemo } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { USERS, ROLE_META } from '../lib/logic'
+import { USERS, ROLE_META, WARDS, RULES, bedLabel, fmtDay, isFever } from '../lib/logic'
 import { Logo } from '../components/Logo'
+import { Avatar } from '../App'
+import { cx } from '../components/ui'
 
-const CARD = {
-  nurse: { icon: Thermometer, c: 'bg-sky-50 text-sky-700', does: ['See who still needs today’s temperature', 'Record each reading once, in seconds', 'Flag high fevers to doctors'] },
-  doctor: { icon: Stethoscope, c: 'bg-brand-50 text-brand-700', does: ['Visit only patients whose temp is in', 'Fever trend & treatment notes', 'Approve discharges at 3 fever-free days'] },
-  admin: { icon: BedDouble, c: 'bg-violet-50 text-violet-700', does: ['Live bed board for all 74 beds', 'Complete approved discharges', 'Admit from the waiting list'] },
-  head: { icon: LayoutDashboard, c: 'bg-amber-50 text-amber-700', does: ['Recovery vs 85% benchmark', 'Rounds compliance & alerts', 'Full activity log'] },
+const STATUS = {
+  due: { cls: 'bg-white ring-1 ring-inset ring-slate-300', label: 'Not measured yet' },
+  normal: { cls: 'bg-emerald-600', label: 'No fever today' },
+  fever: { cls: 'bg-rose-600', label: 'Fever today' },
+  home: { cls: 'bg-violet-600', label: 'Ready to go home' },
+  free: { cls: 'bg-transparent ring-1 ring-inset ring-dashed ring-slate-300 [background-image:repeating-linear-gradient(45deg,#E3E9F2_0,#E3E9F2_2px,transparent_2px,transparent_5px)]', label: 'Free bed' },
 }
 
 export default function Login() {
   const { dispatch, stats, state } = useStore()
-  return (
-    <div className="min-h-full flex flex-col lg:flex-row">
-      <div className="lg:w-[42%] bg-gradient-to-br from-brand-700 via-brand-800 to-brand-900 text-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
-        <div className="absolute -right-24 -bottom-24 h-80 w-80 rounded-full bg-white/5" />
-        <div className="absolute -right-10 top-20 h-40 w-40 rounded-full bg-white/5" />
-        <Logo light />
-        <div className="relative my-10 lg:my-0">
-          <h1 className="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Every patient measured.<br />Every visit on time.<br /><span className="text-brand-200">Every bed turned around fast.</span></h1>
-          <p className="mt-4 text-brand-100 max-w-md">CareCycle replaces the paper temperature journal with one live view of the quarantine ward, from admission to discharge.</p>
-          <div className="mt-8 grid grid-cols-3 gap-3 max-w-md">
-            <div className="rounded-xl bg-white/10 p-3"><p className="text-2xl font-bold tabular-nums">{stats.occupied}<span className="text-sm text-brand-200">/74</span></p><p className="text-xs text-brand-100">beds in use</p></div>
-            <div className="rounded-xl bg-white/10 p-3"><p className="text-2xl font-bold tabular-nums">{stats.recovery.toFixed(0)}%</p><p className="text-xs text-brand-100">recovery rate</p></div>
-            <div className="rounded-xl bg-white/10 p-3"><p className="text-2xl font-bold tabular-nums">{state.waitlist.length}</p><p className="text-xs text-brand-100">waiting</p></div>
-          </div>
-        </div>
-        <p className="relative text-xs text-brand-200 flex items-center gap-1.5"><ShieldCheck size={14} /> Prototype · demo data is stored only in this browser</p>
-      </div>
 
-      <div className="flex-1 p-6 lg:p-12 flex flex-col justify-center">
-        <div className="max-w-2xl w-full mx-auto">
-          <h2 className="text-2xl font-bold text-slate-900">Sign in</h2>
-          <p className="text-slate-500 mt-1">Demo mode: pick a staff member to see their view. You can switch roles any time.</p>
-          <div className="mt-6 grid sm:grid-cols-2 gap-3">
-            {USERS.map((u) => {
-              const m = CARD[u.role], I = m.icon
-              return (
-                <button key={u.id} onClick={() => dispatch({ type: 'LOGIN', user: u })}
-                  className="group text-left rounded-xl bg-white ring-1 ring-slate-200 shadow-card p-4 hover:ring-brand-400 hover:shadow-md transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
-                  <div className="flex items-center gap-3">
-                    <span className={`rounded-lg p-2.5 ${m.c}`}><I size={20} /></span>
-                    <div className="flex-1 min-w-0"><p className="font-semibold text-slate-900">{ROLE_META[u.role].label}</p><p className="text-sm text-slate-500 truncate">{u.name}</p></div>
-                    <ArrowRight size={18} className="text-slate-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition" />
-                  </div>
-                  <ul className="mt-3 space-y-1">{m.does.map((d) => <li key={d} className="text-xs text-slate-600 flex gap-1.5"><span className="text-brand-500">•</span>{d}</li>)}</ul>
-                </button>
-              )
-            })}
+  const beds = useMemo(() => {
+    const byBed = {}
+    for (const { p, d } of stats.days) byBed[p.bed] = { p, s: d.eligible ? 'home' : !d.temp ? 'due' : isFever(d.temp.temp) ? 'fever' : 'normal' }
+    for (const p of stats.approved) byBed[p.bed] = { p, s: 'home' }
+    return byBed
+  }, [stats])
+  const count = (k) => Object.values(beds).filter((b) => b.s === k).length + (k === 'free' ? stats.free : 0)
+  const tempsDue = stats.active.length - stats.tempsDone
+  const ready = stats.tempsDone - stats.visitsDone
+  const goingHome = stats.eligible.length + stats.approved.length
+
+  const waiting = {
+    nurse: [tempsDue, tempsDue === 1 ? 'temperature to take' : 'temperatures to take'],
+    doctor: [ready, ready === 1 ? 'patient ready for a visit' : 'patients ready for a visit'],
+    admin: [stats.approved.length, stats.approved.length === 1 ? 'discharge to complete' : 'discharges to complete'],
+    head: [`${stats.recovery.toFixed(1)}%`, `recovery, against an ${100 - RULES.MORTALITY_LIMIT}% target`],
+  }
+
+  return (
+    <div className="min-h-full flex flex-col lg:grid lg:grid-cols-[1fr_440px]">
+      {/* Ward board */}
+      <section className="chart-paper px-6 sm:px-12 py-8 lg:py-10 flex flex-col">
+        <div className="flex items-center justify-between">
+          <Logo size={30} />
+          <span className="text-sm text-slate-500">{fmtDay(state.today)}</span>
+        </div>
+
+        <div className="mt-10 lg:mt-16 max-w-3xl">
+          <h1 className="cond text-[44px] sm:text-[64px] leading-[0.95] font-semibold tracking-tight text-brand-800">
+            {stats.occupied} of {RULES.CAPACITY} beds full.<br />
+            {tempsDue} temperatures still to take.<br />
+            {goingHome} patients ready to go home.
+          </h1>
+          <p className="mt-5 text-[15px] text-slate-600 max-w-xl leading-relaxed">
+            Defervo replaces the ward’s paper temperature journal. Nurses, doctors and admin staff each see what’s waiting for them, so no one is measured twice and no bed stays blocked once a patient has gone {RULES.CURE_DAYS} days without a fever.
+          </p>
+        </div>
+
+        <div className="mt-10 lg:mt-auto lg:pt-12">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
+            {WARDS.map((w) => (
+              <div key={w.id}>
+                <p className="text-sm font-semibold text-brand-800 mb-2">Ward {w.id}</p>
+                <div className="grid grid-cols-10 gap-[3px] sm:gap-1 w-fit">
+                  {Array.from({ length: w.to - w.from + 1 }, (_, i) => w.from + i).map((b) => {
+                    const x = beds[b]; const s = x ? x.s : 'free'
+                    return <span key={b} title={`${bedLabel(b)}${x ? ` · ${x.p.name}` : ''} · ${STATUS[s].label}`} className={cx('h-[17px] w-[17px] sm:h-[22px] sm:w-[22px] rounded-[3px]', STATUS[s].cls)} />
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mt-6 rounded-xl bg-slate-100/80 p-4 text-sm text-slate-600">
-            <p className="font-semibold text-slate-800 mb-1">Suggested demo path (2 min)</p>
-            <ol className="list-decimal ml-5 space-y-0.5">
-              <li><b>Nurse</b>: record a temperature, then see the patient move to “Done”.</li>
-              <li><b>Doctor</b>: the patient now shows in “Ready for visit”. Record the visit and approve an eligible discharge.</li>
-              <li><b>Admin</b>: complete the discharge, then admit someone from the waiting list into the freed bed.</li>
-              <li><b>Head Doctor</b>: check the benchmark, alerts and activity log. Use <b>Demo ▸ Next day</b> to fast-forward.</li>
-            </ol>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
+            {['due', 'normal', 'fever', 'home', 'free'].map((k) => (
+              <span key={k} className="flex items-center gap-1.5"><span className={cx('h-3 w-3 rounded-[2px]', STATUS[k].cls)} />{STATUS[k].label} <b className="text-slate-800 tabular-nums">{count(k)}</b></span>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Shift start */}
+      <section className="bg-white lg:border-l border-rule px-6 sm:px-10 py-8 lg:py-10 flex flex-col order-first lg:order-none">
+        <div className="lg:hidden mb-6"><Logo size={28} /></div>
+        <h2 className="text-2xl font-semibold tracking-tight text-brand-800 lg:mt-16">Start your shift</h2>
+        <p className="text-sm text-slate-500 mt-1">This is a demo, so there’s no password. Pick a staff member to open their view. You can switch at any time.</p>
+
+        <ul className="mt-6 divide-y divide-rule border-y border-rule">
+          {USERS.map((u) => {
+            const [n, what] = waiting[u.role]
+            return (
+              <li key={u.id}>
+                <button onClick={() => dispatch({ type: 'LOGIN', user: u })} aria-label={`${ROLE_META[u.role].label} ${u.name}`}
+                  className="group w-full text-left flex items-center gap-4 py-4 px-1 hover:bg-paper transition rounded-md">
+                  <Avatar u={u} />
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-semibold text-slate-900">{ROLE_META[u.role].label}</span>
+                    <span className="block text-sm text-slate-500">{u.name}</span>
+                  </span>
+                  <span className="text-right">
+                    <span className="cond block text-[26px] leading-none font-semibold text-brand-800">{n}</span>
+                    <span className="block text-[11px] text-slate-500 max-w-[130px] leading-tight mt-0.5">{what}</span>
+                  </span>
+                  <ChevronRight size={18} className="text-slate-300 group-hover:text-brand-800 group-hover:translate-x-0.5 transition" />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+
+        <details className="mt-6 group">
+          <summary className="cursor-pointer text-sm font-semibold text-brand-800 list-none flex items-center gap-1.5">
+            <ChevronRight size={15} className="transition group-open:rotate-90" /> Two-minute walkthrough
+          </summary>
+          <ol className="mt-3 ml-5 list-decimal space-y-1.5 text-sm text-slate-600">
+            <li>As the nurse, record a temperature in °C or °F.</li>
+            <li>As the doctor, find that patient under “Ready for visit”, record the visit, then approve a discharge.</li>
+            <li>As admin, complete the discharge and admit someone into the free bed.</li>
+            <li>As head doctor, check recovery against the target and convert all readings to one unit.</li>
+          </ol>
+        </details>
+
+        <p className="mt-auto pt-10 text-xs text-slate-400">Prototype for the FactWise TPM assessment. Demo data is stored only in this browser.</p>
+      </section>
     </div>
   )
 }

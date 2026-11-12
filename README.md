@@ -1,4 +1,6 @@
-# CareCycle: quarantine ward operations
+# Defervo: fever tracking and ward operations
+
+*Defervo* comes from **defervescence**, the medical term for a fever going down. Getting a fever down and keeping it down for 3 days is exactly what the app tracks.
 
 A working prototype built for the FactWise Junior TPM assessment. It replaces the paper temperature journal at a 74-bed virus quarantine and treatment centre with one live app for **nurses, doctors, admin staff and the head doctor**.
 

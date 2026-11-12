@@ -23,23 +23,23 @@ export function Badge({ tone = 'slate', children, className, icon: Icon }) {
 }
 
 const BTN = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm disabled:bg-slate-200 disabled:text-slate-400',
+  primary: 'bg-brand-800 text-white hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400',
   secondary: 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:text-slate-400',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm disabled:bg-slate-200',
+  danger: 'bg-rose-600 text-white hover:bg-rose-700 disabled:bg-slate-200',
   ghost: 'text-slate-600 hover:bg-slate-100',
-  violet: 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm disabled:bg-slate-200 disabled:text-slate-400',
+  violet: 'bg-violet-600 text-white hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400',
 }
 export function Button({ variant = 'primary', size = 'md', className, icon: Icon, children, ...p }) {
   const sz = size === 'sm' ? 'px-2.5 py-1.5 text-xs' : size === 'lg' ? 'px-5 py-3 text-base' : 'px-3.5 py-2 text-sm'
   return (
-    <button {...p} className={cx('inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1', BTN[variant], sz, className)}>
+    <button {...p} className={cx('inline-flex items-center justify-center gap-1.5 rounded font-semibold transition disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1', BTN[variant], sz, className)}>
       {Icon && <Icon size={size === 'sm' ? 14 : 16} strokeWidth={2.2} />}{children}
     </button>
   )
 }
 
 export function Card({ className, children, ...p }) {
-  return <div {...p} className={cx('rounded-xl bg-white ring-1 ring-slate-200/80 shadow-card', className)}>{children}</div>
+  return <div {...p} className={cx('rounded-xl bg-white ring-1 ring-rule', className)}>{children}</div>
 }
 
 export function Modal({ open, onClose, title, subtitle, children, footer, width = 'max-w-lg' }) {
@@ -51,8 +51,8 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-[2px] anim-fade" onMouseDown={onClose}>
-      <div className={cx('w-full bg-white rounded-t-2xl sm:rounded-2xl shadow-xl anim-rise max-h-[92vh] flex flex-col', width)} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand-900/40 anim-fade" onMouseDown={onClose}>
+      <div className={cx('w-full bg-white rounded-t-2xl sm:rounded-xl shadow-pop anim-rise max-h-[92vh] flex flex-col', width)} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-3">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
@@ -76,8 +76,8 @@ export function Drawer({ open, onClose, children }) {
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-slate-900/30 anim-fade" onMouseDown={onClose}>
-      <div className="h-full w-full max-w-2xl bg-slate-50 shadow-2xl anim-slide overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>{children}</div>
+    <div className="fixed inset-0 z-40 flex justify-end bg-brand-900/30 anim-fade" onMouseDown={onClose}>
+      <div className="h-full w-full max-w-2xl bg-paper shadow-pop anim-slide overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>{children}</div>
     </div>
   )
 }
@@ -95,7 +95,7 @@ export function Toaster() {
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-[60] flex flex-col gap-2 w-[calc(100%-2rem)] sm:w-96">
       {items.map((t) => { const I = ICON[t.tone]; return (
-        <div key={t.id} className="flex items-start gap-3 rounded-xl bg-slate-900 text-white px-4 py-3 shadow-xl anim-rise text-sm">
+        <div key={t.id} className="flex items-start gap-3 rounded-lg bg-brand-800 text-white px-4 py-3 shadow-pop anim-rise text-sm">
           <I size={18} className={cx('mt-0.5 shrink-0', COL[t.tone])} /><span>{t.msg}</span>
         </div>) })}
     </div>
@@ -146,17 +146,13 @@ export function UnitSwitch({ compact }) {
 }
 
 export function Stat({ label, value, sub, icon: Icon, tone = 'brand', children }) {
-  const ring = { brand: 'bg-brand-50 text-brand-700', amber: 'bg-amber-50 text-amber-700', red: 'bg-rose-50 text-rose-700', violet: 'bg-violet-50 text-violet-700', sky: 'bg-sky-50 text-sky-700', green: 'bg-emerald-50 text-emerald-700' }[tone]
+  const bar = { brand: 'bg-brand-800', amber: 'bg-amber-500', red: 'bg-rose-600', violet: 'bg-violet-600', sky: 'bg-sky-500', green: 'bg-emerald-600' }[tone]
   return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[13px] font-medium text-slate-500">{label}</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 tabular-nums tracking-tight">{value}</p>
-          {sub && <p className="mt-0.5 text-xs text-slate-500">{sub}</p>}
-        </div>
-        {Icon && <span className={cx('rounded-lg p-2', ring)}><Icon size={18} /></span>}
-      </div>
+    <Card className="p-4 relative overflow-hidden">
+      <span className={cx('absolute left-0 top-4 bottom-4 w-[3px] rounded-r', bar)} />
+      <p className="text-[13px] font-medium text-slate-500 flex items-center gap-1.5">{Icon && <Icon size={14} className="text-slate-400" />}{label}</p>
+      <p className="cond mt-1 text-[34px] leading-none font-semibold text-brand-800">{value}</p>
+      {sub && <p className="mt-1.5 text-xs text-slate-500">{sub}</p>}
       {children}
     </Card>
   )
@@ -164,7 +160,7 @@ export function Stat({ label, value, sub, icon: Icon, tone = 'brand', children }
 
 export function Progress({ value, max, tone = 'brand' }) {
   const pct = max ? Math.round((value / max) * 100) : 0
-  const bar = { brand: 'bg-brand-500', sky: 'bg-sky-500', violet: 'bg-violet-500', amber: 'bg-amber-500' }[tone]
+  const bar = { brand: 'bg-brand-800', sky: 'bg-sky-500', violet: 'bg-violet-500', amber: 'bg-amber-500' }[tone]
   return (
     <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
       <div className={cx('h-full rounded-full transition-all duration-500', bar)} style={{ width: pct + '%' }} />
@@ -175,7 +171,7 @@ export function Progress({ value, max, tone = 'brand' }) {
 export function Empty({ icon: Icon, title, body }) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-14 px-6">
-      {Icon && <span className="rounded-full bg-brand-50 text-brand-600 p-3 mb-3"><Icon size={22} /></span>}
+      {Icon && <span className="text-slate-300 mb-3"><Icon size={28} strokeWidth={1.5} /></span>}
       <p className="font-semibold text-slate-800">{title}</p>
       {body && <p className="text-sm text-slate-500 mt-1 max-w-sm">{body}</p>}
     </div>
@@ -188,7 +184,7 @@ export function Tabs({ tabs, value, onChange }) {
       {tabs.map((t) => (
         <button key={t.id} onClick={() => onChange(t.id)}
           className={cx('shrink-0 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
-            value === t.id ? 'bg-white text-slate-900 shadow-card ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60')}>
+            value === t.id ? 'bg-white text-brand-800 ring-1 ring-rule' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60')}>
           {t.label}
           {t.count != null && <span className={cx('rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums', value === t.id ? (t.tone || 'bg-brand-100 text-brand-800') : 'bg-slate-200/70 text-slate-600')}>{t.count}</span>}
         </button>
@@ -206,4 +202,4 @@ export function Field({ label, hint, error, children }) {
     </label>
   )
 }
-export const inputCls = 'w-full rounded-lg border-0 ring-1 ring-inset ring-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 outline-none bg-white'
+export const inputCls = 'w-full rounded border-0 ring-1 ring-inset ring-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-violet-500 outline-none bg-white'

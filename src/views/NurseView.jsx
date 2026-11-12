@@ -24,20 +24,22 @@ export default function NurseView({ openPatient }) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-gradient-to-br from-brand-600 to-brand-700 text-white ring-0">
-        <div className="flex items-start justify-between gap-4">
+      <Card className="p-5">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div>
-            <p className="text-brand-100 text-sm font-medium">Temperature round · {fmtDay(state.today)}</p>
-            <p className="text-3xl font-bold mt-1 tabular-nums">{stats.tempsDone}<span className="text-brand-200 text-xl font-semibold"> / {total} done</span></p>
-            <p className="text-brand-100 text-sm mt-1">{due === 0 ? 'All patients measured today. Great work!' : `${due} patient${due > 1 ? 's' : ''} still need${due === 1 ? 's' : ''} a reading · cut-off ${RULES.ROUND_CUTOFF_HOUR}:00`}</p>
+            <p className="cond text-[52px] leading-none font-semibold text-brand-800">{stats.tempsDone}<span className="text-slate-300">/{total}</span></p>
+            <p className="text-sm text-slate-600 mt-1.5">{due === 0 ? 'Every patient has been measured today.' : `temperatures taken · ${due} to go before ${RULES.ROUND_CUTOFF_HOUR}:00`}</p>
           </div>
-          <Thermometer size={36} className="text-brand-200 shrink-0" />
+          {stats.missedYesterday.length > 0 && <p className="text-sm text-rose-700 flex items-center gap-1.5"><AlertTriangle size={15} /> {stats.missedYesterday.length} patient{stats.missedYesterday.length > 1 ? 's' : ''} missed yesterday. Measure them first.</p>}
         </div>
-        <div className="mt-4 h-2 rounded-full bg-white/20 overflow-hidden"><div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${total ? (stats.tempsDone / total) * 100 : 0}%` }} /></div>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-brand-100">
-          <span>Each patient is measured <b className="text-white">once a day</b>.</span>
-          {stats.missedYesterday.length > 0 && <span className="text-amber-200 font-medium">⚠ {stats.missedYesterday.length} missed yesterday: prioritise them</span>}
+        {/* One tick per patient, in bed order: the round at a glance */}
+        <div className="mt-5 flex items-end gap-[2px] h-9 anim-tick" aria-hidden>
+          {[...stats.days].sort((a, b) => a.p.bed - b.p.bed).map(({ p, d }, i) => (
+            <span key={p.id} style={{ animationDelay: `${i * 6}ms` }} title={`${bedLabel(p.bed)} ${p.name}`}
+              className={cx('flex-1 rounded-[1px]', d.temp ? (d.fever ? 'bg-rose-500 h-9' : 'bg-brand-800 h-9') : 'bg-slate-200 h-4')} />
+          ))}
         </div>
+        <div className="mt-2 flex justify-between text-[11px] text-slate-400"><span>Bed A-01</span><span>Tall marks are measured, red ones have a fever</span><span>D-14</span></div>
       </Card>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
@@ -48,12 +50,12 @@ export default function NurseView({ openPatient }) {
         ]} />
         <div className="relative sm:w-64">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or bed…" className="w-full rounded-lg bg-white ring-1 ring-slate-200 pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or bed…" className="w-full rounded-md bg-white ring-1 ring-rule pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500" />
         </div>
       </div>
       <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
         {['all', ...WARDS.map((w) => w.id)].map((w) => (
-          <button key={w} onClick={() => setWard(w)} className={cx('shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition', ward === w ? 'bg-slate-900 text-white ring-slate-900' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50')}>
+          <button key={w} onClick={() => setWard(w)} className={cx('shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition', ward === w ? 'bg-brand-800 text-white ring-brand-800' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50')}>
             {w === 'all' ? 'All wards' : `Ward ${w}`}
           </button>
         ))}
@@ -67,7 +69,7 @@ export default function NurseView({ openPatient }) {
             const y = rIdx[p.id]?.[yesterday]
             return (
               <Card key={p.id} className={cx('p-3.5 flex items-center gap-3 transition hover:ring-slate-300', d.highFever && 'ring-rose-300 bg-rose-50/30')}>
-                <button onClick={() => openPatient(p.id)} className="h-12 w-12 shrink-0 rounded-lg bg-slate-100 text-slate-700 font-bold text-sm grid place-items-center hover:bg-slate-200">{bedLabel(p.bed)}</button>
+                <button onClick={() => openPatient(p.id)} className="cond h-12 w-12 shrink-0 rounded-md bg-paper ring-1 ring-rule text-brand-800 font-semibold text-[17px] grid place-items-center hover:bg-brand-50">{bedLabel(p.bed)}</button>
                 <button onClick={() => openPatient(p.id)} className="flex-1 min-w-0 text-left">
                   <p className="font-semibold text-slate-900 truncate">{p.name}</p>
                   <p className="text-xs text-slate-500 flex items-center gap-1.5 flex-wrap">
@@ -78,11 +80,11 @@ export default function NurseView({ openPatient }) {
                 </button>
                 {d.temp ? (
                   <div className="text-right shrink-0">
-                    <Temp value={d.temp.temp} rec={d.temp.unit} className="text-lg" mark />
+                    <Temp value={d.temp.temp} rec={d.temp.unit} className="cond text-[22px]" />
                     <p className="text-[11px] text-slate-400 flex items-center gap-1 justify-end"><CheckCircle2 size={11} className="text-emerald-500" />{d.temp.at}</p>
                   </div>
                 ) : (
-                  <Button className="shrink-0" icon={Thermometer} onClick={() => setEntry(p)}>Record</Button>
+                  <Button variant="secondary" className="shrink-0 !ring-brand-800/25 text-brand-800 hover:!bg-brand-800 hover:text-white" icon={Thermometer} onClick={() => setEntry(p)}>Record</Button>
                 )}
               </Card>
             )
