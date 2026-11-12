@@ -72,13 +72,13 @@ export default function NurseView({ openPatient }) {
                   <p className="font-semibold text-slate-900 truncate">{p.name}</p>
                   <p className="text-xs text-slate-500 flex items-center gap-1.5 flex-wrap">
                     <span>{p.age}{p.sex} · day {d.daysIn}</span>
-                    <span>· yday {y ? <Temp value={y.temp} className="text-xs" /> : d.daysIn > 1 ? <span className="text-rose-600 font-medium">missed</span> : 'n/a'}</span>
+                    <span>· yday {y ? <Temp value={y.temp} rec={y.unit} className="text-xs" /> : d.daysIn > 1 ? <span className="text-rose-600 font-medium">missed</span> : 'n/a'}</span>
                   </p>
                   {d.missedYesterday && !d.temp && <Badge tone="red" icon={AlertTriangle} className="mt-1">Missed yesterday</Badge>}
                 </button>
                 {d.temp ? (
                   <div className="text-right shrink-0">
-                    <Temp value={d.temp.temp} className="text-lg" />
+                    <Temp value={d.temp.temp} rec={d.temp.unit} className="text-lg" mark />
                     <p className="text-[11px] text-slate-400 flex items-center gap-1 justify-end"><CheckCircle2 size={11} className="text-emerald-500" />{d.temp.at}</p>
                   </div>
                 ) : (

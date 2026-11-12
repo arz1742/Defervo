@@ -3,7 +3,8 @@ import { Stethoscope, LogOut, Thermometer, CheckCircle2, AlertTriangle, ChevronR
 import { useStore } from '../lib/store'
 import { Badge, Card, Empty, Progress, Stat, StreakDots, Tabs, Temp, cx } from '../components/ui'
 import { StageBadge } from '../components/PatientDrawer'
-import { RULES, bedLabel, fmtDate, fmtDay, patientDay } from '../lib/logic'
+import { RULES, bedLabel, fmtDate, fmtDay, patientDay, fmtT, showUnit } from '../lib/logic'
+import { useUnitMode } from '../components/ui'
 
 export default function DoctorView({ openPatient }) {
   const { state, stats, rIdx, vIdx } = useStore()
@@ -25,6 +26,7 @@ export default function DoctorView({ openPatient }) {
 
   const rows = (groups[tab] || []).filter(({ p }) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || bedLabel(p.bed).toLowerCase().includes(q.toLowerCase()))
   const total = stats.active.length
+  const mode = useUnitMode()
 
   return (
     <div className="space-y-4">
@@ -32,14 +34,14 @@ export default function DoctorView({ openPatient }) {
         <Stat label="Ready for visit" value={groups.ready.length} sub="Temperature already taken" icon={Stethoscope} tone="sky" />
         <Stat label="Visits done today" value={`${stats.visitsDone}/${total}`} icon={CheckCircle2} tone="green"><Progress value={stats.visitsDone} max={total} tone="brand" /></Stat>
         <Stat label="Discharge eligible" value={stats.eligible.length} sub={`${RULES.CURE_DAYS} fever-free days`} icon={LogOut} tone="violet" />
-        <Stat label="High fever today" value={stats.highFevers.length} sub={`≥ ${RULES.HIGH_FEVER_C} °C`} icon={AlertTriangle} tone="red" />
+        <Stat label="High fever today" value={stats.highFevers.length} sub={`≥ ${fmtT(RULES.HIGH_FEVER_C, mode === 'F' ? 'F' : 'C')}`} icon={AlertTriangle} tone="red" />
       </div>
 
       {stats.highFevers.length > 0 && (
         <Card className="p-3.5 ring-rose-200 bg-rose-50/60 flex flex-wrap items-center gap-2 text-sm">
           <AlertTriangle size={16} className="text-rose-600" /><span className="font-semibold text-rose-800">Prioritise:</span>
           {stats.highFevers.map(({ p, d }) => (
-            <button key={p.id} onClick={() => openPatient(p.id)} className="rounded-full bg-white ring-1 ring-rose-200 px-2.5 py-0.5 text-rose-700 hover:bg-rose-100">{bedLabel(p.bed)} {p.name.split(' ')[0]} · {d.temp.temp.toFixed(1)}°</button>
+            <button key={p.id} onClick={() => openPatient(p.id)} className="rounded-full bg-white ring-1 ring-rose-200 px-2.5 py-0.5 text-rose-700 hover:bg-rose-100">{bedLabel(p.bed)} {p.name.split(' ')[0]} · {fmtT(d.temp.temp, showUnit(mode, d.temp.unit), '')}</button>
           ))}
         </Card>
       )}
@@ -82,7 +84,7 @@ export default function DoctorView({ openPatient }) {
                     <td className="px-4 py-3 font-semibold text-slate-700">{bedLabel(p.bed)}</td>
                     <td className="px-4 py-3"><p className="font-medium text-slate-900">{p.name}</p><p className="text-xs text-slate-500">{p.id} · {p.age}{p.sex}</p></td>
                     <td className="px-4 py-3 hidden md:table-cell text-slate-600">{d.daysIn}</td>
-                    <td className="px-4 py-3">{d.temp ? <Temp value={d.temp.temp} /> : <span className="text-xs text-amber-700 font-medium">Not taken</span>}</td>
+                    <td className="px-4 py-3">{d.temp ? <Temp value={d.temp.temp} rec={d.temp.unit} mark /> : <span className="text-xs text-amber-700 font-medium">Not taken</span>}</td>
                     <td className="px-4 py-3 hidden sm:table-cell"><div className="flex items-center gap-2"><StreakDots streak={p.status === 'discharge_approved' ? 3 : d.streak} size="sm" /><span className="text-xs text-slate-500">{Math.min(d.streak, 9)}d</span></div></td>
                     <td className="px-4 py-3 hidden lg:table-cell"><div className="flex gap-1.5"><StageBadge d={d} status={p.status} />{d.eligible && <Badge tone="violet">Eligible</Badge>}</div></td>
                     <td className="px-3 text-slate-300"><ChevronRight size={18} /></td>

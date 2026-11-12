@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
-import { RULES } from '../lib/logic'
+import { RULES, isFever, isHigh, fmtT, showUnit } from '../lib/logic'
+import { useStore } from '../lib/store'
 
 export const cx = (...a) => a.filter(Boolean).join(' ')
 
@@ -113,10 +114,35 @@ export function StreakDots({ streak, size = 'md' }) {
   )
 }
 
-export function Temp({ value, className }) {
+/** Current viewer's display mode: 'C' | 'F' | 'orig' (as recorded) */
+export function useUnitMode() { return useStore().state.prefs?.displayUnit || 'C' }
+/** Shows a °C-canonical value in the viewer's chosen unit. `rec` = unit it was recorded in. */
+export function Temp({ value, rec, className, mark }) {
+  const mode = useUnitMode()
   if (value == null) return <span className={cx('text-slate-400', className)}>—</span>
-  const tone = value >= RULES.HIGH_FEVER_C ? 'text-rose-600' : value >= RULES.FEVER_C ? 'text-orange-600' : 'text-emerald-700'
-  return <span className={cx('font-semibold tabular-nums', tone, className)}>{value.toFixed(1)}°C</span>
+  const tone = isHigh(value) ? 'text-rose-600' : isFever(value) ? 'text-orange-600' : 'text-emerald-700'
+  const u = showUnit(mode, rec)
+  const converted = mode !== 'orig' && rec && rec !== u
+  return (
+    <span className={cx('font-semibold tabular-nums whitespace-nowrap', tone, className)} title={rec ? `Recorded in °${rec}${converted ? `, shown converted to °${u}` : ''}` : ''}>
+      {fmtT(value, u, '')}
+    </span>
+  )
+}
+
+/** Segmented control: show temperatures as recorded / all °C / all °F */
+export function UnitSwitch({ compact }) {
+  const { state, dispatch } = useStore()
+  const mode = state.prefs?.displayUnit || 'C'
+  const opts = [['orig', compact ? 'Mixed' : 'As recorded'], ['C', '°C'], ['F', '°F']]
+  return (
+    <div className="inline-flex rounded-lg bg-slate-100 p-0.5 ring-1 ring-slate-200" role="group" aria-label="Temperature unit">
+      {opts.map(([k, l]) => (
+        <button key={k} onClick={() => dispatch({ type: 'SET_DISPLAY_UNIT', unit: k })} title={k === 'orig' ? 'Show each reading in the unit it was recorded in' : `Convert and show all readings in ${l}`}
+          className={cx('whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition', mode === k ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800')}>{l}</button>
+      ))}
+    </div>
+  )
 }
 
 export function Stat({ label, value, sub, icon: Icon, tone = 'brand', children }) {

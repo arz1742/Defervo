@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bell, CalendarDays, ChevronDown, FastForward, LayoutDashboard, LogOut, RotateCcw, Stethoscope, Thermometer, BedDouble, History, Wand2, Repeat } from 'lucide-react'
+import { Bell, CalendarDays, ChevronDown, FastForward, LayoutDashboard, LogOut, RotateCcw, Stethoscope, Thermometer, BedDouble, History, Wand2, Repeat, Ruler } from 'lucide-react'
 import { useStore } from './lib/store'
 import { ROLE_META, USERS, fmtDay } from './lib/logic'
 import { Logo } from './components/Logo'
-import { Button, Modal, Toaster, cx, toast } from './components/ui'
+import { Button, Modal, Toaster, UnitSwitch, cx, toast } from './components/ui'
+import UnitsView from './views/UnitsView'
 import AlertsList from './components/AlertsList'
 import PatientDrawer from './components/PatientDrawer'
 import Login from './views/Login'
@@ -17,7 +18,7 @@ const NAV = {
   nurse: [{ id: 'rounds', label: 'Temperature round', icon: Thermometer }],
   doctor: [{ id: 'ward', label: 'Ward round', icon: Stethoscope }],
   admin: [{ id: 'beds', label: 'Beds & discharges', icon: BedDouble }, { id: 'activity', label: 'Activity log', icon: History }],
-  head: [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'ward', label: 'Ward round', icon: Stethoscope }, { id: 'beds', label: 'Beds & discharges', icon: BedDouble }, { id: 'activity', label: 'Activity log', icon: History }],
+  head: [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'ward', label: 'Ward round', icon: Stethoscope }, { id: 'beds', label: 'Beds & discharges', icon: BedDouble }, { id: 'units', label: 'Units', icon: Ruler }, { id: 'activity', label: 'Activity log', icon: History }],
 }
 const TITLES = {
   rounds: ['Temperature round', 'Measure every patient once today. The list updates for doctors instantly.'],
@@ -25,6 +26,7 @@ const TITLES = {
   beds: ['Beds, discharges & admissions', 'Turn approved discharges into free beds, then admit from the waiting list.'],
   dashboard: ['Centre overview', 'Treatment quality, daily operations and what needs attention.'],
   activity: ['Activity log', ''],
+  units: ['Temperature units & data standards', 'Readings arrive in °C and °F. View them in one unit, set the default, and standardise the stored records.'],
 }
 
 function usePop() {
@@ -59,19 +61,20 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
           <Logo compact />
           <span className="hidden md:block font-bold text-slate-900 tracking-tight -ml-1">CareCycle</span>
-          <nav className="hidden md:flex items-center gap-1 ml-6">
+          <nav className="hidden md:flex items-center gap-0.5 ml-4">
             {nav.map((n) => (
-              <button key={n.id} onClick={() => setView(n.id)} className={cx('flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition', cur === n.id ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100')}>
+              <button key={n.id} onClick={() => setView(n.id)} className={cx('flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition', cur === n.id ? 'bg-brand-50 text-brand-800' : 'text-slate-600 hover:bg-slate-100')}>
                 <n.icon size={16} />{n.label}
               </button>
             ))}
           </nav>
           <div className="flex-1" />
+          <div className="hidden xl:flex items-center gap-2"><span className="hidden 2xl:inline text-xs font-medium text-slate-500">Temps</span><UnitSwitch /></div>
 
           {/* Simulated date + demo controls */}
           <div className="relative" ref={demo.ref}>
             <button onClick={() => demo.setOpen(!demo.open)} className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm ring-1 ring-slate-200 bg-white hover:bg-slate-50">
-              <CalendarDays size={15} className="text-brand-600" /><span className="font-medium text-slate-700 hidden sm:inline">{fmtDay(state.today)}</span><span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 rounded px-1.5 py-0.5">Demo</span><ChevronDown size={14} className="text-slate-400" />
+              <CalendarDays size={15} className="text-brand-600" /><span className="font-medium text-slate-700 hidden sm:inline whitespace-nowrap">{fmtDay(state.today)}</span><span className="text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 rounded px-1.5 py-0.5">Demo</span><ChevronDown size={14} className="text-slate-400" />
             </button>
             {demo.open && (
               <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-xl ring-1 ring-slate-200 p-2 anim-rise">
@@ -103,7 +106,7 @@ export default function App() {
           <div className="relative" ref={me.ref}>
             <button onClick={() => me.setOpen(!me.open)} className="flex items-center gap-2 rounded-lg pl-1 pr-2 py-1 hover:bg-slate-100">
               <span className="h-8 w-8 rounded-full bg-brand-600 text-white text-xs font-bold grid place-items-center">{user.initials}</span>
-              <span className="hidden lg:block text-left leading-tight"><span className="block text-sm font-medium text-slate-800">{user.name}</span><span className="block text-[11px] text-slate-500">{user.title}</span></span>
+              <span className={cx("hidden text-left leading-tight whitespace-nowrap", nav.length > 2 ? "2xl:block" : "lg:block")}><span className="block text-sm font-medium text-slate-800">{user.name}</span><span className="block text-[11px] text-slate-500">{user.title}</span></span>
               <ChevronDown size={14} className="text-slate-400" />
             </button>
             {me.open && (
@@ -121,6 +124,7 @@ export default function App() {
             )}
           </div>
         </div>
+        <div className="xl:hidden flex items-center justify-end gap-2 px-4 pb-2 -mt-1"><span className="text-xs font-medium text-slate-500">Temps</span><UnitSwitch compact /></div>
         {nav.length > 1 && (
           <nav className="md:hidden flex gap-1 overflow-x-auto scrollbar-none px-4 pb-2">
             {nav.map((n) => (
@@ -142,6 +146,7 @@ export default function App() {
         {cur === 'beds' && <AdminView openPatient={setPid} />}
         {cur === 'dashboard' && <Dashboard openPatient={setPid} go={setView} />}
         {cur === 'activity' && <ActivityLog openPatient={setPid} />}
+        {cur === 'units' && <UnitsView />}
       </main>
 
       {pid && <PatientDrawer pid={pid} onClose={() => setPid(null)} />}

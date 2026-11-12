@@ -9,6 +9,7 @@ A working prototype built for the FactWise Junior TPM assessment. It replaces th
 | Doctors arrive before the temperature is taken | Visits unlock only after the reading. Doctors see a "Ready for visit" queue |
 | Patients stay extra days | The 3-fever-free-day rule is checked automatically, then doctor approval goes to the admin discharge queue |
 | Admin finds out about discharges late | Approved discharges appear for admin instantly. A bed board and waiting list fill the freed bed |
+| Different wards use °C and °F thermometers | Readings can be entered in either unit and are stored with that unit. A view switch shows everything in °C, °F or as recorded, and a one-click tool standardises all stored records |
 | No way to measure the 85% benchmark | Dashboard with recovery/mortality vs benchmark, 7-day trend, rounds compliance and alerts |
 
 ## Demo

@@ -1,4 +1,4 @@
-import { RULES, USERS, addDays } from './logic'
+import { RULES, USERS, addDays, toF, toC, round1, wardOf } from './logic'
 
 const FIRST = ['Aarav','Vivaan','Aditya','Arjun','Sai','Reyansh','Krishna','Ishaan','Rohan','Kabir','Ananya','Diya','Aadhya','Saanvi','Myra','Kiara','Ira','Meera','Pooja','Sneha','Rahul','Amit','Sunil','Ravi','Manoj','Farhan','Imran','Zoya','Sana','Ayesha','Neel','Dev','Harsh','Yash','Om','Tara','Nisha','Kavya','Riya','Lakshmi','Gopal','Suresh','Vikas','Deepak','Anil','Fatima','Mehul','Pranav','Tanvi','Rekha','Joseph','Maria','Gurpreet','Harpreet','Simran','Arnav','Varun','Nikhil','Shreya','Aditi']
 const LAST = ['Shah','Patel','Mehta','Iyer','Nair','Reddy','Rao','Gupta','Sharma','Verma','Khan','Shaikh','Joshi','Kulkarni','Desai','Pillai','Menon','Das','Bose','Banerjee','Singh','Gill','Fernandes','D’Souza','Chopra','Malhotra','Kapoor','Jain','Agarwal','Pawar']
@@ -79,7 +79,10 @@ export function createSeed() {
       if (!isToday && A - d > 4 && r() < 0.04) continue // occasional historic miss (pre-app)
       let temp = d < F ? feverT() : normalT()
       if (isToday && kind === 'febrile' && r() < 0.18) temp = +between(39.6, 40.3).toFixed(1)
-      readings.push({ id: rid++, pid: p.id, date, temp, at: isToday ? hm(7, 10) : hm(7, 11), by: nurse })
+      // Wards C & D use Fahrenheit thermometers → readings entered in °F (mixed-unit data)
+      const fUnit = ['C', 'D'].includes(wardOf(bed)) && r() < 0.9
+      const raw = fUnit ? round1(toF(temp)) : temp
+      readings.push({ id: rid++, pid: p.id, date, temp: fUnit ? toC(raw) : temp, unit: fUnit ? 'F' : 'C', raw, at: isToday ? hm(7, 10) : hm(7, 11), by: fUnit ? 'Rahul Verma' : nurse })
       const visitToday = isToday && kind !== 'eligible' && r() < 0.45
       if (!isToday || visitToday) {
         visits.push({ id: vid++, pid: p.id, date, at: isToday ? hm(10, 12) : hm(11, 16), by: doctor, note: d < F ? pick(NOTES.slice(0, 5)) : pick(NOTES.slice(3)), treatment: pick(TREAT).replace('{d}', d + 1) })
@@ -110,7 +113,8 @@ export function createSeed() {
   )
 
   return {
-    version: 1, today, startedOn: today, user: null,
+    version: 2, today, startedOn: today, user: null,
+    prefs: { displayUnit: 'orig', entryUnit: 'C' },
     patients, readings, visits, waitlist, snapshots, audit,
     nextIds: { patient: pidN, reading: rid, visit: vid, wait: 307, audit: 4 },
   }

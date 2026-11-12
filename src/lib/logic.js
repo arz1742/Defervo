@@ -33,6 +33,9 @@ export const ROLE_META = {
   head: { label: 'Head Doctor', color: 'amber' },
 }
 
+export const isFever = (c) => c >= RULES.FEVER_C - 1e-9
+export const isHigh = (c) => c >= RULES.HIGH_FEVER_C - 1e-9
+
 // ─── Dates (simulated "today" is stored as YYYY-MM-DD) ───────────────────────
 export const addDays = (d, n) => {
   const x = new Date(d + 'T00:00:00Z')
@@ -69,7 +72,7 @@ export function feverFreeStreak(rIdx, pid, today) {
   const days = rIdx[pid] || {}
   let d = days[today] ? today : addDays(today, -1)
   let s = 0
-  while (days[d] && days[d].temp < RULES.FEVER_C) { s++; d = addDays(d, -1) }
+  while (days[d] && days[d].temp < RULES.FEVER_C - 1e-9) { s++; d = addDays(d, -1) }
   return s
 }
 
@@ -87,8 +90,8 @@ export function patientDay(state, p, rIdx, vIdx) {
   const missedYesterday = active && p.admittedOn <= yesterday && !rIdx[p.id]?.[yesterday]
   return {
     temp, visit, streak, eligible, stage, missedYesterday,
-    fever: temp ? temp.temp >= RULES.FEVER_C : null,
-    highFever: temp ? temp.temp >= RULES.HIGH_FEVER_C : false,
+    fever: temp ? isFever(temp.temp) : null,
+    highFever: temp ? isHigh(temp.temp) : false,
     daysIn: diffDays(t, p.admittedOn) + 1,
   }
 }
@@ -124,6 +127,7 @@ export function computeStats(state, rIdx, vIdx) {
 
 /** Alerts are derived (never stored) so they always reflect the current truth. */
 export function computeAlerts(state, stats) {
+  const mode = state.prefs?.displayUnit || 'C'
   const a = []
   const h = nowHour()
   const total = stats.active.length
@@ -132,7 +136,7 @@ export function computeAlerts(state, stats) {
   else if (stats.recentCount >= 5 && stats.recentMortality > RULES.MORTALITY_LIMIT)
     a.push({ id: 'mort7', level: 'warning', roles: ['head', 'doctor'], title: `Last-7-day mortality is ${stats.recentMortality.toFixed(1)}%`, body: `Overall is ${stats.mortality.toFixed(1)}% (within benchmark), but the recent trend is above ${RULES.MORTALITY_LIMIT}%.` })
   for (const x of stats.highFevers)
-    a.push({ id: 'hf-' + x.p.id, pid: x.p.id, level: 'critical', roles: ['doctor', 'head'], title: `High fever: ${x.p.name} (${bedLabel(x.p.bed)})`, body: `${x.d.temp.temp.toFixed(1)} °C recorded at ${x.d.temp.at}. Prioritise this visit.` })
+    a.push({ id: 'hf-' + x.p.id, pid: x.p.id, level: 'critical', roles: ['doctor', 'head'], title: `High fever: ${x.p.name} (${bedLabel(x.p.bed)})`, body: `${fmtT(x.d.temp.temp, showUnit(mode, x.d.temp.unit))} recorded at ${x.d.temp.at}. Prioritise this visit.` })
   const tempsDue = total - stats.tempsDone
   if (tempsDue > 0 && h >= RULES.ROUND_CUTOFF_HOUR)
     a.push({ id: 'tempdue', level: 'warning', roles: ['nurse', 'head'], title: `${tempsDue} temperature${tempsDue > 1 ? 's' : ''} overdue`, body: `Morning round cut-off is ${RULES.ROUND_CUTOFF_HOUR}:00.` })
@@ -152,12 +156,30 @@ export function computeAlerts(state, stats) {
   return a
 }
 
-/** Validates a temperature entry. Returns { error } | { warning } | {} */
-export function validateTemp(raw) {
-  const v = Number(String(raw).replace(',', '.'))
-  if (raw === '' || Number.isNaN(v)) return { error: 'Enter a temperature in °C.' }
-  if (v < RULES.TEMP_MIN_C || v > RULES.TEMP_MAX_C) return { error: `Must be between ${RULES.TEMP_MIN_C} and ${RULES.TEMP_MAX_C} °C. Check the thermometer (°F not accepted).` }
-  if (v >= RULES.HIGH_FEVER_C) return { value: v, warning: 'High fever. The doctors will be alerted straight away.' }
-  if (v < RULES.LOW_TEMP_C) return { value: v, warning: 'Unusually low reading. Please re-measure to confirm before saving.' }
-  return { value: v }
+// ─── Units ───────────────────────────────────────────────────────────────────
+// Every reading is stored canonically in °C (`temp`, full precision) for all rules,
+// plus the unit it was entered in (`unit`) and the exact value typed (`raw`).
+export const toF = (c) => (c * 9) / 5 + 32
+export const toC = (f) => ((f - 32) * 5) / 9
+export const conv = (c, unit) => (unit === 'F' ? toF(c) : c)
+export const round1 = (x) => Math.round(x * 10) / 10
+/** Format a Celsius value in a unit, e.g. fmtT(38, 'F') → "100.4 °F" */
+export const fmtT = (c, unit = 'C', sep = ' ') => `${round1(conv(c, unit)).toFixed(1)}${sep}°${unit}`
+/** Which unit to show a reading in, given the viewer's display mode ('C' | 'F' | 'orig'). */
+export const showUnit = (mode, rec) => (mode === 'orig' ? rec || 'C' : mode)
+
+/** Validates a temperature entry typed in `unit`. Returns { error } | { value (°C), raw, warning? } */
+export function validateTemp(raw, unit = 'C') {
+  const n = Number(String(raw).replace(',', '.'))
+  if (raw === '' || Number.isNaN(n)) return { error: `Enter a temperature in °${unit}.` }
+  const v = unit === 'F' ? toC(n) : n
+  const lo = fmtT(RULES.TEMP_MIN_C, unit, ''), hi = fmtT(RULES.TEMP_MAX_C, unit, '')
+  if (v < RULES.TEMP_MIN_C - 1e-9 || v > RULES.TEMP_MAX_C + 1e-9) {
+    const other = unit === 'C' && n >= 93 && n <= 110 ? ' This looks like °F. Switch the unit above.' : unit === 'F' && n >= 34 && n <= 43 ? ' This looks like °C. Switch the unit above.' : ''
+    return { error: `Must be between ${lo} and ${hi}.${other}` }
+  }
+  const out = { value: v, raw: round1(n) }
+  if (v >= RULES.HIGH_FEVER_C - 1e-9) return { ...out, warning: 'High fever. The doctors will be alerted straight away.' }
+  if (v < RULES.LOW_TEMP_C) return { ...out, warning: 'Unusually low reading. Please re-measure to confirm before saving.' }
+  return out
 }

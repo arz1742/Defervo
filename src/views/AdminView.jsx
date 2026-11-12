@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { BedDouble, LogOut, UserPlus, Users, CheckCircle2, Lock, Clock, Plus } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { Badge, Button, Card, Empty, Field, Modal, Stat, Tabs, cx, inputCls, toast } from '../components/ui'
-import { RULES, WARDS, bedLabel, diffDays, fmtDate } from '../lib/logic'
+import { RULES, WARDS, bedLabel, diffDays, fmtDate, isFever } from '../lib/logic'
 
 export default function AdminView({ openPatient }) {
   const { state, stats, dispatch } = useStore()
@@ -55,7 +55,7 @@ export default function AdminView({ openPatient }) {
                     return (
                       <button key={b} onClick={() => openPatient(p.id)} title={p.name}
                         className={cx('aspect-[4/3] rounded-lg ring-1 text-[11px] font-semibold flex flex-col items-center justify-center px-1 transition hover:scale-[1.04]',
-                          approved ? 'bg-violet-100 ring-violet-400 text-violet-800' : temp && temp.temp >= RULES.FEVER_C ? 'bg-orange-50 ring-orange-300 text-orange-800' : 'bg-white ring-slate-300 text-slate-700')}>
+                          approved ? 'bg-violet-100 ring-violet-400 text-violet-800' : temp && isFever(temp.temp) ? 'bg-orange-50 ring-orange-300 text-orange-800' : 'bg-white ring-slate-300 text-slate-700')}>
                         <span>{bedLabel(b)}</span>
                         <span className="font-normal truncate max-w-full opacity-80">{p.name.split(' ')[0]}</span>
                       </button>

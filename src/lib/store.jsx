@@ -1,16 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react'
 import { createSeed, arrivalsFor } from './seed'
 import {
-  RULES, addDays, nowHM, indexReadings, indexVisits, computeStats, computeAlerts, bedLabel, feverFreeStreak,
+  RULES, addDays, nowHM, indexReadings, indexVisits, computeStats, computeAlerts, bedLabel, feverFreeStreak, fmtT, isFever, isHigh, round1, conv,
 } from './logic'
 
-const KEY = 'carecycle-v1'
+const KEY = 'carecycle-v2'
 const Ctx = createContext(null)
 
 function load() {
   try {
     const s = localStorage.getItem(KEY)
-    if (s) { const p = JSON.parse(s); if (p?.version === 1) return p }
+    if (s) { const p = JSON.parse(s); if (p?.version === 2) return p }
   } catch { /* storage unavailable */ }
   return createSeed()
 }
@@ -33,10 +33,12 @@ function reducer(s, a) {
       const p = P(s, a.pid)
       if (!p || p.status !== 'admitted' || !['nurse', 'head', 'doctor'].includes(s.user?.role)) return s
       if (s.readings.some((r) => r.pid === a.pid && r.date === s.today)) return s // one reading per day
-      const r = { id: s.nextIds.reading, pid: a.pid, date: s.today, temp: a.temp, at: nowHM(), by: s.user.name }
+      const unit = a.unit === 'F' ? 'F' : 'C'
+      const r = { id: s.nextIds.reading, pid: a.pid, date: s.today, temp: a.temp, unit, raw: a.raw, at: nowHM(), by: s.user.name }
       const ns = { ...s, readings: [...s.readings, r], nextIds: { ...s.nextIds, reading: r.id + 1 } }
-      const flag = a.temp >= RULES.HIGH_FEVER_C ? ' · HIGH FEVER' : a.temp >= RULES.FEVER_C ? ' · fever' : ''
-      return log(ns, 'Temperature recorded', `${p.name} (${bedLabel(p.bed)}): ${a.temp.toFixed(1)} °C${flag}`, p.id)
+      const flag = isHigh(a.temp) ? ' · HIGH FEVER' : isFever(a.temp) ? ' · fever' : ''
+      const both = unit === 'F' ? `${a.raw.toFixed(1)} °F (${fmtT(a.temp, 'C')})` : `${a.raw.toFixed(1)} °C`
+      return log(ns, 'Temperature recorded', `${p.name} (${bedLabel(p.bed)}): ${both}${flag}`, p.id)
     }
     case 'CORRECT_TEMP': {
       const r = s.readings.find((x) => x.id === a.id)
@@ -44,8 +46,9 @@ function reducer(s, a) {
       if (s.visits.some((v) => v.pid === r.pid && v.date === s.today)) return s // locked once the doctor has used it
       const p = P(s, r.pid)
       if (p.status !== 'admitted') return s
-      const ns = { ...s, readings: s.readings.map((x) => (x.id === a.id ? { ...x, temp: a.temp, corrected: { from: x.temp, reason: a.reason, by: s.user.name, at: nowHM() } } : x)) }
-      return log(ns, 'Temperature corrected', `${p.name}: ${r.temp.toFixed(1)} → ${a.temp.toFixed(1)} °C (“${a.reason}”)`, p.id)
+      const unit = a.unit === 'F' ? 'F' : 'C'
+      const ns = { ...s, readings: s.readings.map((x) => (x.id === a.id ? { ...x, temp: a.temp, unit, raw: a.raw, corrected: { from: x.temp, fromUnit: x.unit || 'C', reason: a.reason, by: s.user.name, at: nowHM() } } : x)) }
+      return log(ns, 'Temperature corrected', `${p.name}: ${fmtT(r.temp, r.unit || 'C')} → ${a.raw.toFixed(1)} °${unit} (“${a.reason}”)`, p.id)
     }
     case 'RECORD_VISIT': {
       const p = P(s, a.pid)
@@ -91,6 +94,21 @@ function reducer(s, a) {
       return log(ns, 'Patient admitted', `${p.name} → bed ${bedLabel(a.bed)}`, p.id)
     }
 
+    // ── Units ──
+    case 'SET_DISPLAY_UNIT': return { ...s, prefs: { ...s.prefs, displayUnit: a.unit } }
+    case 'SET_ENTRY_UNIT': {
+      if (s.user?.role !== 'head') return s
+      return log({ ...s, prefs: { ...s.prefs, entryUnit: a.unit } }, 'Default entry unit changed', `New readings default to °${a.unit}`)
+    }
+    case 'STANDARDISE_UNITS': {
+      if (s.user?.role !== 'head' || !['C', 'F'].includes(a.unit)) return s
+      const n = s.readings.filter((r) => (r.unit || 'C') !== a.unit).length
+      if (!n) return s
+      // Canonical °C value is untouched, so no clinical decision can change; only the recorded unit/raw value is rewritten.
+      const readings = s.readings.map((r) => ((r.unit || 'C') === a.unit ? r : { ...r, unit: a.unit, raw: round1(conv(r.temp, a.unit)), convertedFrom: r.unit || 'C' }))
+      return log({ ...s, readings, prefs: { ...s.prefs, entryUnit: a.unit, displayUnit: a.unit } }, 'Records standardised', `${n} readings converted to °${a.unit}. All ${s.readings.length} readings are now in °${a.unit}, and it is the default entry unit`)
+    }
+
     // ── Demo controls ──
     case 'AUTOFILL': {
       let ns = s
@@ -103,12 +121,13 @@ function reducer(s, a) {
         let r = idx[p.id]?.[s.today]
         if (!r) {
           const last = idx[p.id]?.[addDays(s.today, -1)]
-          const fever = last ? (last.temp >= RULES.FEVER_C ? Math.random() < 0.55 : Math.random() < 0.06) : true
+          const fever = last ? (isFever(last.temp) ? Math.random() < 0.55 : Math.random() < 0.06) : true
           const temp = +(fever ? 38.1 + Math.random() * 1.6 : 36.4 + Math.random() * 1.2).toFixed(1)
-          r = { id: rid++, pid: p.id, date: s.today, temp, at: nowHM(), by }
+          const unit = s.prefs.entryUnit
+          r = { id: rid++, pid: p.id, date: s.today, temp: unit === 'F' ? ((round1(temp * 9 / 5 + 32) - 32) * 5) / 9 : temp, unit, raw: unit === 'F' ? round1(temp * 9 / 5 + 32) : temp, at: nowHM(), by }
           readings.push(r)
         }
-        if (a.visits && !vis[p.id]?.[s.today]) visits.push({ id: vid++, pid: p.id, date: s.today, at: nowHM(), by, note: r.temp >= RULES.FEVER_C ? 'Fever persisting. Continue treatment.' : 'Afebrile, stable.', treatment: r.temp >= RULES.FEVER_C ? 'Antipyretics, IV fluids' : 'Observation' })
+        if (a.visits && !vis[p.id]?.[s.today]) visits.push({ id: vid++, pid: p.id, date: s.today, at: nowHM(), by, note: isFever(r.temp) ? 'Fever persisting. Continue treatment.' : 'Afebrile, stable.', treatment: isFever(r.temp) ? 'Antipyretics, IV fluids' : 'Observation' })
       }
       ns = { ...s, readings: [...s.readings, ...readings], visits: [...s.visits, ...visits], nextIds: { ...s.nextIds, reading: rid, visit: vid } }
       return log(ns, 'Demo: rounds auto-completed', `${readings.length} temperatures${a.visits ? `, ${visits.length} visits` : ''}`)

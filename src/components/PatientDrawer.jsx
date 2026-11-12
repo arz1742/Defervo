@@ -4,7 +4,8 @@ import { useStore } from '../lib/store'
 import { Badge, Button, Card, Drawer, Modal, StreakDots, Temp, cx, inputCls, toast } from './ui'
 import TempChart from './TempChart'
 import TempEntry from './TempEntry'
-import { RULES, bedLabel, fmtDay, fmtDate, patientDay } from '../lib/logic'
+import { RULES, bedLabel, fmtDay, fmtDate, patientDay, fmtT, isFever, showUnit } from '../lib/logic'
+import { useUnitMode } from './ui'
 
 export function StageBadge({ d, status }) {
   if (status === 'discharge_approved') return <Badge tone="violet" icon={LogOut}>Discharge approved</Badge>
@@ -23,6 +24,7 @@ export default function PatientDrawer({ pid, onClose }) {
   const [revokeOpen, setRevokeOpen] = useState(false)
   if (!p) return null
   const role = state.user.role
+  const mode = useUnitMode()
   const d = patientDay(state, p, rIdx, vIdx)
   const readings = state.readings.filter((r) => r.pid === p.id).sort((a, b) => a.date.localeCompare(b.date))
   const visits = state.visits.filter((v) => v.pid === p.id)
@@ -60,8 +62,8 @@ export default function PatientDrawer({ pid, onClose }) {
               <div className={cx('rounded-lg p-3 ring-1', d.temp ? 'bg-emerald-50/50 ring-emerald-200' : 'bg-amber-50/60 ring-amber-200')}>
                 <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Thermometer size={16} /> 1 · Temperature</div>
                 {d.temp ? (
-                  <div className="mt-1.5 text-sm text-slate-600"><Temp value={d.temp.temp} className="text-lg" /> at {d.temp.at} · {d.temp.by}
-                    {d.temp.corrected && <span className="block text-xs text-amber-700 mt-0.5">Corrected from {d.temp.corrected.from.toFixed(1)} °C: “{d.temp.corrected.reason}”</span>}
+                  <div className="mt-1.5 text-sm text-slate-600"><Temp value={d.temp.temp} rec={d.temp.unit} className="text-lg" /> at {d.temp.at} · {d.temp.by}{mode !== 'orig' && d.temp.unit && d.temp.unit !== mode && <span className="block text-xs text-slate-500">Recorded as {d.temp.raw?.toFixed(1)} °{d.temp.unit}</span>}
+                    {d.temp.corrected && <span className="block text-xs text-amber-700 mt-0.5">Corrected from {fmtT(d.temp.corrected.from, showUnit(mode, d.temp.corrected.fromUnit))}: “{d.temp.corrected.reason}”</span>}
                   </div>
                 ) : <p className="mt-1.5 text-sm text-amber-800">Not measured yet</p>}
                 {role === 'nurse' && (d.temp
@@ -87,7 +89,7 @@ export default function PatientDrawer({ pid, onClose }) {
                 <p className="text-sm text-slate-500 mt-0.5">
                   {p.status === 'discharge_approved' ? `Approved by ${p.approvedBy} on ${fmtDate(p.approvedOn)}. Waiting for admin to complete the discharge.`
                     : d.eligible ? 'Criterion met. The patient can be discharged.'
-                    : d.streak === 0 ? (d.temp?.temp >= RULES.FEVER_C ? 'Fever today. Count restarts after the next normal reading.' : 'No fever-free days counted yet.')
+                    : d.streak === 0 ? (d.temp && isFever(d.temp.temp) ? 'Fever today. Count restarts after the next normal reading.' : 'No fever-free days counted yet.')
                     : `${d.streak} fever-free day${d.streak > 1 ? 's' : ''} so far, ${needed} more needed.`}
                 </p>
               </div>
@@ -126,7 +128,7 @@ export default function PatientDrawer({ pid, onClose }) {
             <div className="flex gap-3 text-[11px] text-slate-500">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-600" />Normal</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-600" />Fever</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-600" />≥{RULES.HIGH_FEVER_C}</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-600" />≥{fmtT(RULES.HIGH_FEVER_C, mode === 'F' ? 'F' : 'C', '')}</span>
             </div>
           </div>
           <TempChart readings={readings} admittedOn={p.admittedOn} today={p.closedOn || state.today} />
@@ -140,7 +142,7 @@ export default function PatientDrawer({ pid, onClose }) {
               {history.map(({ date, r, v }) => (
                 <li key={date} className="px-4 py-3 text-sm flex gap-4">
                   <div className="w-20 shrink-0 text-slate-500">{fmtDate(date)}</div>
-                  <div className="w-20 shrink-0">{r ? <Temp value={r.temp} /> : <span className="text-rose-500 text-xs font-medium">Missed</span>}</div>
+                  <div className="w-20 shrink-0">{r ? <Temp value={r.temp} rec={r.unit} mark /> : <span className="text-rose-500 text-xs font-medium">Missed</span>}</div>
                   <div className="flex-1 min-w-0 text-slate-600">
                     {v ? <><span className="font-medium text-slate-800">{v.treatment}</span>{v.note && <span className="block text-slate-500">{v.note}</span>}<span className="text-xs text-slate-400">{v.by} · {v.at}</span></> : <span className="text-slate-400">No doctor visit</span>}
                   </div>
@@ -174,7 +176,7 @@ function VisitForm({ p, d }) {
   return (
     <Card className="p-4 ring-sky-200">
       <p className="text-sm font-semibold text-slate-800 flex items-center gap-2"><Stethoscope size={16} className="text-sky-600" /> Record today’s visit</p>
-      <p className="text-xs text-slate-500 mt-0.5">Today’s reading: <Temp value={d.temp.temp} /> {d.fever ? '(fever)' : '(normal)'}</p>
+      <p className="text-xs text-slate-500 mt-0.5">Today’s reading: <Temp value={d.temp.temp} rec={d.temp.unit} /> {d.fever ? '(fever)' : '(normal)'}</p>
       <div className="mt-3 space-y-3">
         <div>
           <label className="text-sm font-medium text-slate-700">Treatment / plan <span className="text-rose-500">*</span></label>
