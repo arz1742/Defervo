@@ -37,7 +37,7 @@ export default function TempChart({ readings, admittedOn, today, height = 220 })
               contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,.06)' }}
               formatter={(v, n, it) => (v == null ? ['Not measured', 'Temp'] : [`${v.toFixed(1)} °${unit}${it.payload.rec !== unit ? ` (recorded in °${it.payload.rec})` : ''}`, 'Temp'])}
               labelFormatter={(l, p) => (p?.[0] ? `${l} · ${p[0].payload.date}` : l)} />
-            <Line type="monotone" dataKey="temp" stroke="#1E7250" strokeWidth={2} dot={<Dot />} activeDot={{ r: 6 }} connectNulls={false} isAnimationActive={false} />
+            <Line type="monotone" dataKey="temp" stroke="#0F7C64" strokeWidth={2} dot={<Dot />} activeDot={{ r: 6 }} connectNulls={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

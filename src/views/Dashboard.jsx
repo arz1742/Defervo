@@ -74,7 +74,7 @@ export default function Dashboard({ openPatient, go }) {
                 <YAxis yAxisId="p" orientation="right" domain={[0, 40]} tickFormatter={(v) => v + '%'} tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v, n) => (n === 'Mortality %' ? [v == null ? 'n/a' : v + '%', n] : [v, n])} labelFormatter={(l) => 'Week of ' + l} />
                 <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-                <Bar yAxisId="n" dataKey="recovered" name="Recovered" stackId="a" fill="#2D8C63" radius={[0, 0, 0, 0]} />
+                <Bar yAxisId="n" dataKey="recovered" name="Recovered" stackId="a" fill="#159577" radius={[0, 0, 0, 0]} />
                 <Bar yAxisId="n" dataKey="deceased" name="Deceased" stackId="a" fill="#E5483B" radius={[4, 4, 0, 0]} />
                 <ReferenceLine yAxisId="p" y={RULES.MORTALITY_LIMIT} stroke="#e11d48" strokeDasharray="4 4" label={{ value: `${RULES.MORTALITY_LIMIT}% limit`, position: 'insideTopLeft', fontSize: 10, fill: '#be123c' }} />
                 <Line yAxisId="p" dataKey="mortality" name="Mortality %" stroke="#E5483B" strokeWidth={2.5} dot={{ r: 3.5, fill: '#fff', strokeWidth: 2 }} connectNulls isAnimationActive={false} />
@@ -100,7 +100,7 @@ export default function Dashboard({ openPatient, go }) {
                 <YAxis domain={[50, 100]} tickFormatter={(v) => v + '%'} tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }} formatter={(v) => v + '%'} />
                 <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8} />
-                <Line dataKey="temps" name="Temperatures" stroke="#1E7250" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+                <Line dataKey="temps" name="Temperatures" stroke="#0D4F42" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
                 <Line dataKey="visits" name="Doctor visits" stroke="#3F66EC" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>

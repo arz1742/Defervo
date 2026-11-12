@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { USERS, ROLE_META, WARDS, RULES, bedLabel, fmtDay, isFever } from '../lib/logic'
@@ -8,10 +8,31 @@ import { cx } from '../components/ui'
 
 const STATUS = {
   due: { cls: 'bg-white ring-1 ring-inset ring-slate-300', label: 'Not measured yet' },
-  normal: { cls: 'bg-emerald-600', label: 'No fever today' },
-  fever: { cls: 'bg-rose-600', label: 'Fever today' },
-  home: { cls: 'bg-violet-600', label: 'Ready to go home' },
-  free: { cls: 'bg-transparent ring-1 ring-inset ring-dashed ring-slate-300 [background-image:repeating-linear-gradient(45deg,#E3E9F2_0,#E3E9F2_2px,transparent_2px,transparent_5px)]', label: 'Free bed' },
+  normal: { cls: 'bg-brand-500', label: 'No fever today' },
+  fever: { cls: 'bg-rose-500', label: 'Fever today' },
+  home: { cls: 'bg-violet-500', label: 'Ready to go home' },
+  free: { cls: 'bg-transparent ring-1 ring-inset ring-slate-300 [background-image:repeating-linear-gradient(45deg,#E2EEE7_0,#E2EEE7_2px,transparent_2px,transparent_5px)]', label: 'Free bed' },
+}
+
+/** Counts up from 0 once on mount; shows the final value straight away if the user prefers reduced motion. */
+function CountUp({ to, delay = 0, duration = 900 }) {
+  const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  const [n, setN] = useState(reduce ? to : 0)
+  useEffect(() => {
+    if (reduce) { setN(to); return }
+    let raf, start
+    const t = setTimeout(() => {
+      const step = (ts) => {
+        start ??= ts
+        const p = Math.min((ts - start) / duration, 1)
+        setN(Math.round(to * (1 - Math.pow(1 - p, 3))))
+        if (p < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    }, delay)
+    return () => { clearTimeout(t); cancelAnimationFrame(raf) }
+  }, [to])
+  return <span className="tabular-nums">{n}</span>
 }
 
 export default function Login() {
@@ -35,88 +56,95 @@ export default function Login() {
     head: [`${stats.recovery.toFixed(1)}%`, `recovery, against an ${100 - RULES.MORTALITY_LIMIT}% target`],
   }
 
+  const lines = [
+    <><CountUp to={stats.occupied} delay={150} /> of {RULES.CAPACITY} beds full.</>,
+    <><CountUp to={tempsDue} delay={300} /> temperatures still to take.</>,
+    <><CountUp to={goingHome} delay={450} /> patients ready to go home.</>,
+  ]
+
   return (
-    <div className="min-h-full flex flex-col lg:grid lg:grid-cols-[1fr_440px]">
-      {/* Ward board */}
-      <section className="chart-paper relative overflow-hidden px-6 sm:px-12 py-8 lg:py-10 flex flex-col">
-        {/* Ward photo: faded into the chart paper so the data stays the hero */}
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 hidden md:block w-[72%] bg-cover bg-[center_30%]"
-          style={{
-            backgroundImage: 'url(/ward-care.jpg)', opacity: 0.34,
-            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, #000 40%, transparent 88%)',
-            maskImage: 'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, #000 40%, transparent 88%)',
-            WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
-          }} />
-        <div className="relative hidden lg:flex items-center justify-between">
-          <Logo size={30} />
+    <div className="min-h-full flex flex-col lg:grid lg:grid-cols-[1fr_480px] bg-paper">
+      {/* Live ward board */}
+      <section className="px-6 sm:px-12 py-8 lg:py-10 flex flex-col">
+        <div className="hidden lg:flex items-center justify-between intro" style={{ animationDelay: '0ms' }}>
+          <Logo size={44} />
           <span className="text-sm text-slate-500">{fmtDay(state.today)}</span>
         </div>
 
-        <div className="relative lg:mt-16 max-w-3xl">
-          <h1 className="cond text-[44px] sm:text-[64px] leading-[0.95] font-semibold tracking-tight text-brand-800">
-            {stats.occupied} of {RULES.CAPACITY} beds full.<br />
-            {tempsDue} temperatures still to take.<br />
-            {goingHome} patients ready to go home.
+        <div className="lg:mt-20 max-w-3xl">
+          <h1 className="cond text-[44px] sm:text-[66px] leading-[0.98] font-semibold tracking-tight text-brand-800">
+            {lines.map((l, i) => (
+              <span key={i} className="block overflow-hidden pb-1">
+                <span className="block line-in" style={{ animationDelay: `${120 + i * 150}ms` }}>{l}</span>
+              </span>
+            ))}
           </h1>
-          <p className="mt-5 text-[15px] text-slate-700 max-w-xl leading-relaxed">
-            Defervo replaces the ward’s paper temperature journal. Nurses, doctors and admin staff each see what’s waiting for them, so no one is measured twice and no bed stays blocked once a patient has gone {RULES.CURE_DAYS} days without a fever.
+          <p className="mt-6 text-[16px] text-slate-600 max-w-xl leading-relaxed intro" style={{ animationDelay: '650ms' }}>
+            Defervo replaces the ward’s paper temperature journal. Every nurse, doctor and admin sees exactly what’s waiting for them, so no one is measured twice and no bed stays blocked once a patient has gone {RULES.CURE_DAYS} days without a fever.
           </p>
         </div>
 
-        <div className="relative mt-10 lg:mt-auto lg:pt-12"><div className="rounded-xl bg-white/90 backdrop-blur-sm ring-1 ring-rule p-5 sm:p-6 w-fit max-w-full">
-          <p className="text-sm font-semibold text-brand-800 mb-4">Bed status right now</p>
-          <div className="grid grid-cols-1 sm:grid-cols-[repeat(2,auto)] 2xl:grid-cols-[repeat(4,auto)] gap-x-10 2xl:gap-x-8 gap-y-5 w-fit">
-            {WARDS.map((w) => (
-              <div key={w.id}>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">Ward {w.id}</p>
-                <div className="grid grid-cols-[repeat(10,auto)] gap-[3px] 2xl:gap-1 w-fit">
-                  {Array.from({ length: w.to - w.from + 1 }, (_, i) => w.from + i).map((b) => {
-                    const x = beds[b]; const s = x ? x.s : 'free'
-                    return <span key={b} title={`${bedLabel(b)}${x ? ` · ${x.p.name}` : ''} · ${STATUS[s].label}`} className={cx('h-[18px] w-[18px] 2xl:h-[22px] 2xl:w-[22px] rounded-[3px]', STATUS[s].cls)} />
-                  })}
+        <div className="mt-10 lg:mt-auto lg:pt-12 intro" style={{ animationDelay: '800ms' }}>
+          <div className="rounded-2xl bg-white ring-1 ring-rule p-5 sm:p-6 w-fit max-w-full">
+            <p className="text-sm font-semibold text-brand-800 mb-4">Bed status right now</p>
+            <div className="grid grid-cols-1 sm:grid-cols-[repeat(2,auto)] 2xl:grid-cols-[repeat(4,auto)] gap-x-10 2xl:gap-x-8 gap-y-5 w-fit">
+              {WARDS.map((w) => (
+                <div key={w.id}>
+                  <p className="text-xs font-medium text-slate-500 mb-1.5">Ward {w.id}</p>
+                  <div className="grid grid-cols-[repeat(10,auto)] gap-[3px] 2xl:gap-1 w-fit">
+                    {Array.from({ length: w.to - w.from + 1 }, (_, i) => w.from + i).map((b) => {
+                      const x = beds[b]; const s = x ? x.s : 'free'
+                      return <span key={b} title={`${bedLabel(b)}${x ? ` · ${x.p.name}` : ''} · ${STATUS[s].label}`} className={cx('h-[18px] w-[18px] 2xl:h-[22px] 2xl:w-[22px] rounded-[4px]', STATUS[s].cls)} />
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
+              {['due', 'normal', 'fever', 'home', 'free'].map((k) => (
+                <span key={k} className="flex items-center gap-1.5"><span className={cx('h-3 w-3 rounded-[3px]', STATUS[k].cls)} />{STATUS[k].label} <b className="text-slate-800 tabular-nums">{count(k)}</b></span>
+              ))}
+            </div>
           </div>
-          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
-            {['due', 'normal', 'fever', 'home', 'free'].map((k) => (
-              <span key={k} className="flex items-center gap-1.5"><span className={cx('h-3 w-3 rounded-[2px]', STATUS[k].cls)} />{STATUS[k].label} <b className="text-slate-800 tabular-nums">{count(k)}</b></span>
-            ))}
-          </div>
-        </div></div>
+        </div>
       </section>
 
       {/* Shift start */}
       <section className="bg-white lg:border-l border-rule px-6 sm:px-10 py-8 lg:py-10 flex flex-col order-first lg:order-none">
-        <div className="lg:hidden mb-6"><Logo size={28} /></div>
-        <h2 className="text-2xl font-semibold tracking-tight text-brand-800 lg:mt-16">Start your shift</h2>
-        <p className="text-sm text-slate-500 mt-1">This is a demo, so there’s no password. Pick a staff member to open their view. You can switch at any time.</p>
+        <div className="lg:hidden mb-6"><Logo size={36} /></div>
+        <figure className="intro" style={{ animationDelay: '200ms' }}>
+          <img src="/ward-care.jpg" alt="A nurse checking on a smiling patient in a hospital bed"
+            className="w-full aspect-[16/10] object-cover object-[center_35%] rounded-2xl ring-1 ring-rule" />
+        </figure>
 
-        <ul className="mt-6 divide-y divide-rule border-y border-rule">
-          {USERS.map((u) => {
+        <h2 className="mt-7 text-2xl font-semibold tracking-tight text-brand-800 intro" style={{ animationDelay: '350ms' }}>Start your shift</h2>
+        <p className="text-sm text-slate-500 mt-1 intro" style={{ animationDelay: '400ms' }}>This is a demo, so there’s no password. Pick a staff member to open their view. You can switch at any time.</p>
+
+        <ul className="mt-4 divide-y divide-rule border-y border-rule">
+          {USERS.map((u, i) => {
             const [n, what] = waiting[u.role]
             return (
-              <li key={u.id}>
+              <li key={u.id} className="intro" style={{ animationDelay: `${480 + i * 80}ms` }}>
                 <button onClick={() => dispatch({ type: 'LOGIN', user: u })} aria-label={`${ROLE_META[u.role].label} ${u.name}`}
-                  className="group w-full text-left flex items-center gap-4 py-4 px-1 hover:bg-paper transition rounded-md">
+                  className="group w-full text-left flex items-center gap-4 py-3.5 px-2 -mx-2 hover:bg-brand-50 transition rounded-lg">
                   <Avatar u={u} />
                   <span className="flex-1 min-w-0">
                     <span className="block font-semibold text-slate-900">{ROLE_META[u.role].label}</span>
                     <span className="block text-sm text-slate-500">{u.name}</span>
                   </span>
                   <span className="text-right">
-                    <span className="cond block text-[26px] leading-none font-semibold text-brand-800">{n}</span>
-                    <span className="block text-[11px] text-slate-500 max-w-[130px] leading-tight mt-0.5">{what}</span>
+                    <span className="cond block text-[26px] leading-none font-semibold text-brand-700">{n}</span>
+                    <span className="block text-[11px] text-slate-500 max-w-[140px] leading-tight mt-0.5">{what}</span>
                   </span>
-                  <ChevronRight size={18} className="text-slate-300 group-hover:text-brand-800 group-hover:translate-x-0.5 transition" />
+                  <ChevronRight size={18} className="text-slate-300 group-hover:text-brand-700 group-hover:translate-x-0.5 transition" />
                 </button>
               </li>
             )
           })}
         </ul>
 
-        <details className="mt-6 group">
-          <summary className="cursor-pointer text-sm font-semibold text-brand-800 list-none flex items-center gap-1.5">
+        <details className="mt-5 group intro" style={{ animationDelay: '820ms' }}>
+          <summary className="cursor-pointer text-sm font-semibold text-brand-700 list-none flex items-center gap-1.5">
             <ChevronRight size={15} className="transition group-open:rotate-90" /> Two-minute walkthrough
           </summary>
           <ol className="mt-3 ml-5 list-decimal space-y-1.5 text-sm text-slate-600">
@@ -127,7 +155,7 @@ export default function Login() {
           </ol>
         </details>
 
-        <p className="mt-auto pt-10 text-xs text-slate-400">Prototype for the FactWise TPM assessment. Demo data is stored only in this browser.</p>
+        <p className="mt-auto pt-8 text-xs text-slate-400">Prototype for the FactWise TPM assessment. Demo data is stored only in this browser.</p>
       </section>
     </div>
   )

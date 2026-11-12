@@ -83,7 +83,7 @@ export default function App() {
     <div className="min-h-full lg:flex">
       {/* ── Sidebar (desktop) ── */}
       <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 h-screen sticky top-0 bg-white border-r border-rule">
-        <div className="px-5 h-16 flex items-center"><Logo /></div>
+        <div className="px-5 h-16 flex items-center"><Logo size={34} /></div>
         <nav className="px-3 mt-2 space-y-0.5">
           {nav.map((n) => (
             <button key={n.id} onClick={() => setView(n.id)}
@@ -124,7 +124,7 @@ export default function App() {
         {/* Mobile top bar */}
         <header className="lg:hidden sticky top-0 z-30 bg-white border-b border-rule">
           <div className="px-4 h-14 flex items-center gap-2">
-            <Logo size={26} />
+            <Logo size={28} />
             <div className="flex-1" />
             <div className="relative" ref={demoM.ref}>
               <button onClick={() => demoM.setOpen(!demoM.open)} className="rounded-md px-2 py-1.5 text-xs font-semibold text-brand-800 ring-1 ring-rule whitespace-nowrap">{fmtDay(state.today)}</button>

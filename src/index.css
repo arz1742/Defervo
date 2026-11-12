@@ -28,3 +28,9 @@ body { @apply bg-paper text-slate-800 antialiased; font-feature-settings: 'tnum'
 .anim-fade { animation: fade .15s ease-out; }
 .anim-tick > * { transform-origin: bottom; animation: tick .5s cubic-bezier(.2,.8,.2,1) both; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Opening sequence on the start screen: headline lines rise into place, then the rest fades up. */
+@keyframes line-in { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes intro { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.line-in { animation: line-in .7s cubic-bezier(.2,.75,.15,1) both; }
+.intro { animation: intro .55s cubic-bezier(.2,.7,.2,1) both; }
