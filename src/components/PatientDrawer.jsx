@@ -40,7 +40,7 @@ export default function PatientDrawer({ pid, onClose }) {
   return (
     <Drawer open onClose={onClose}>
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-slate-200 px-5 py-4 flex items-start gap-4">
-        <div className="cond h-12 w-12 rounded-md bg-brand-800 text-white grid place-items-center text-lg font-semibold shrink-0">{bed ? bedLabel(bed) : '—'}</div>
+        <div className="cond h-12 w-12 rounded-md bg-brand-50 ring-1 ring-brand-200 text-brand-700 grid place-items-center text-lg font-semibold shrink-0">{bed ? bedLabel(bed) : '—'}</div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-slate-900 truncate">{p.name}</h2>

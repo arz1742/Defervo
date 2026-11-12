@@ -10,10 +10,10 @@ body { @apply bg-paper text-slate-800 antialiased; font-feature-settings: 'tnum'
 .tabular-nums { font-feature-settings: 'tnum' 1; }
 /* Chart-paper grid, the visual signature (used sparingly) */
 .chart-paper {
-  background-color: #FBFCFE;
+  background-color: #F7FBF9;
   background-image:
-    linear-gradient(#E6ECF5 1px, transparent 1px), linear-gradient(90deg, #E6ECF5 1px, transparent 1px),
-    linear-gradient(#F0F3F8 1px, transparent 1px), linear-gradient(90deg, #F0F3F8 1px, transparent 1px);
+    linear-gradient(#DFEEE6 1px, transparent 1px), linear-gradient(90deg, #DFEEE6 1px, transparent 1px),
+    linear-gradient(#EDF5F0 1px, transparent 1px), linear-gradient(90deg, #EDF5F0 1px, transparent 1px);
   background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
 }
 .scrollbar-none::-webkit-scrollbar { display: none; }

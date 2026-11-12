@@ -36,7 +36,7 @@ export default function NurseView({ openPatient }) {
         <div className="mt-5 flex items-end gap-[2px] h-9 anim-tick" aria-hidden>
           {[...stats.days].sort((a, b) => a.p.bed - b.p.bed).map(({ p, d }, i) => (
             <span key={p.id} style={{ animationDelay: `${i * 6}ms` }} title={`${bedLabel(p.bed)} ${p.name}`}
-              className={cx('flex-1 rounded-[1px]', d.temp ? (d.fever ? 'bg-rose-500 h-9' : 'bg-brand-800 h-9') : 'bg-slate-200 h-4')} />
+              className={cx('flex-1 rounded-[1px]', d.temp ? (d.fever ? 'bg-rose-500 h-9' : 'bg-brand-500 h-9') : 'bg-slate-200 h-4')} />
           ))}
         </div>
         <div className="mt-2 flex justify-between text-[11px] text-slate-400"><span>Bed A-01</span><span>Tall marks are measured, red ones have a fever</span><span>D-14</span></div>
@@ -55,7 +55,7 @@ export default function NurseView({ openPatient }) {
       </div>
       <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
         {['all', ...WARDS.map((w) => w.id)].map((w) => (
-          <button key={w} onClick={() => setWard(w)} className={cx('shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition', ward === w ? 'bg-brand-800 text-white ring-brand-800' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50')}>
+          <button key={w} onClick={() => setWard(w)} className={cx('shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition', ward === w ? 'bg-brand-600 text-white ring-brand-600' : 'bg-white text-slate-600 ring-slate-200 hover:bg-slate-50')}>
             {w === 'all' ? 'All wards' : `Ward ${w}`}
           </button>
         ))}
@@ -84,7 +84,7 @@ export default function NurseView({ openPatient }) {
                     <p className="text-[11px] text-slate-400 flex items-center gap-1 justify-end"><CheckCircle2 size={11} className="text-emerald-500" />{d.temp.at}</p>
                   </div>
                 ) : (
-                  <Button variant="secondary" className="shrink-0 !ring-brand-800/25 text-brand-800 hover:!bg-brand-800 hover:text-white" icon={Thermometer} onClick={() => setEntry(p)}>Record</Button>
+                  <Button variant="secondary" className="shrink-0 !ring-brand-300 text-brand-700 hover:!bg-brand-600 hover:text-white" icon={Thermometer} onClick={() => setEntry(p)}>Record</Button>
                 )}
               </Card>
             )

@@ -23,7 +23,7 @@ export function Badge({ tone = 'slate', children, className, icon: Icon }) {
 }
 
 const BTN = {
-  primary: 'bg-brand-800 text-white hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400',
+  primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-slate-200 disabled:text-slate-400',
   secondary: 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 disabled:text-slate-400',
   danger: 'bg-rose-600 text-white hover:bg-rose-700 disabled:bg-slate-200',
   ghost: 'text-slate-600 hover:bg-slate-100',
@@ -51,7 +51,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand-900/40 anim-fade" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-brand-900/25 anim-fade" onMouseDown={onClose}>
       <div className={cx('w-full bg-white rounded-t-2xl sm:rounded-xl shadow-pop anim-rise max-h-[92vh] flex flex-col', width)} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="flex items-start justify-between gap-4 px-5 pt-5 pb-3">
           <div>
@@ -76,7 +76,7 @@ export function Drawer({ open, onClose, children }) {
   }, [open, onClose])
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-brand-900/30 anim-fade" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-40 flex justify-end bg-brand-900/20 anim-fade" onMouseDown={onClose}>
       <div className="h-full w-full max-w-2xl bg-paper shadow-pop anim-slide overflow-y-auto" onMouseDown={(e) => e.stopPropagation()}>{children}</div>
     </div>
   )
@@ -95,7 +95,7 @@ export function Toaster() {
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 z-[60] flex flex-col gap-2 w-[calc(100%-2rem)] sm:w-96">
       {items.map((t) => { const I = ICON[t.tone]; return (
-        <div key={t.id} className="flex items-start gap-3 rounded-lg bg-brand-800 text-white px-4 py-3 shadow-pop anim-rise text-sm">
+        <div key={t.id} className="flex items-start gap-3 rounded-lg bg-white text-slate-800 ring-1 ring-brand-200 px-4 py-3 shadow-pop anim-rise text-sm">
           <I size={18} className={cx('mt-0.5 shrink-0', COL[t.tone])} /><span>{t.msg}</span>
         </div>) })}
     </div>
@@ -146,7 +146,7 @@ export function UnitSwitch({ compact }) {
 }
 
 export function Stat({ label, value, sub, icon: Icon, tone = 'brand', children }) {
-  const bar = { brand: 'bg-brand-800', amber: 'bg-amber-500', red: 'bg-rose-600', violet: 'bg-violet-600', sky: 'bg-sky-500', green: 'bg-emerald-600' }[tone]
+  const bar = { brand: 'bg-brand-500', amber: 'bg-amber-500', red: 'bg-rose-600', violet: 'bg-violet-600', sky: 'bg-sky-500', green: 'bg-emerald-600' }[tone]
   return (
     <Card className="p-4 relative overflow-hidden">
       <span className={cx('absolute left-0 top-4 bottom-4 w-[3px] rounded-r', bar)} />
@@ -160,7 +160,7 @@ export function Stat({ label, value, sub, icon: Icon, tone = 'brand', children }
 
 export function Progress({ value, max, tone = 'brand' }) {
   const pct = max ? Math.round((value / max) * 100) : 0
-  const bar = { brand: 'bg-brand-800', sky: 'bg-sky-500', violet: 'bg-violet-500', amber: 'bg-amber-500' }[tone]
+  const bar = { brand: 'bg-brand-500', sky: 'bg-sky-500', violet: 'bg-violet-500', amber: 'bg-amber-500' }[tone]
   return (
     <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
       <div className={cx('h-full rounded-full transition-all duration-500', bar)} style={{ width: pct + '%' }} />
@@ -184,7 +184,7 @@ export function Tabs({ tabs, value, onChange }) {
       {tabs.map((t) => (
         <button key={t.id} onClick={() => onChange(t.id)}
           className={cx('shrink-0 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
-            value === t.id ? 'bg-white text-brand-800 ring-1 ring-rule' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60')}>
+            value === t.id ? 'bg-white text-brand-700 ring-1 ring-brand-200' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60')}>
           {t.label}
           {t.count != null && <span className={cx('rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums', value === t.id ? (t.tone || 'bg-brand-100 text-brand-800') : 'bg-slate-200/70 text-slate-600')}>{t.count}</span>}
         </button>

@@ -88,7 +88,7 @@ export default function App() {
           {nav.map((n) => (
             <button key={n.id} onClick={() => setView(n.id)}
               className={cx('w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition',
-                cur === n.id ? 'bg-brand-800 text-white' : 'text-slate-600 hover:bg-paper hover:text-brand-800')}>
+                cur === n.id ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' : 'text-slate-600 hover:bg-paper hover:text-brand-700')}>
               <n.icon size={17} strokeWidth={cur === n.id ? 2.2 : 1.8} />{n.label}
             </button>
           ))}
@@ -138,7 +138,7 @@ export default function App() {
           </div>
           <div className="px-4 pb-2 flex items-center gap-2 overflow-x-auto scrollbar-none">
             {nav.length > 1 && nav.map((n) => (
-              <button key={n.id} onClick={() => setView(n.id)} className={cx('shrink-0 rounded-md px-2.5 py-1 text-sm font-medium', cur === n.id ? 'bg-brand-800 text-white' : 'text-slate-600')}>{n.label}</button>
+              <button key={n.id} onClick={() => setView(n.id)} className={cx('shrink-0 rounded-md px-2.5 py-1 text-sm font-medium', cur === n.id ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200' : 'text-slate-600')}>{n.label}</button>
             ))}
             <div className="ml-auto shrink-0"><UnitSwitch compact /></div>
           </div>
