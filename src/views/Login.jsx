@@ -38,32 +38,41 @@ export default function Login() {
   return (
     <div className="min-h-full flex flex-col lg:grid lg:grid-cols-[1fr_440px]">
       {/* Ward board */}
-      <section className="chart-paper px-6 sm:px-12 py-8 lg:py-10 flex flex-col">
-        <div className="flex items-center justify-between">
+      <section className="chart-paper relative overflow-hidden px-6 sm:px-12 py-8 lg:py-10 flex flex-col">
+        {/* Ward photo: faded into the chart paper so the data stays the hero */}
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 hidden md:block w-[72%] bg-cover bg-[center_30%]"
+          style={{
+            backgroundImage: 'url(/ward-care.jpg)', opacity: 0.34,
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, #000 40%, transparent 88%)',
+            maskImage: 'linear-gradient(to right, transparent 0%, #000 42%), linear-gradient(to bottom, #000 40%, transparent 88%)',
+            WebkitMaskComposite: 'source-in', maskComposite: 'intersect',
+          }} />
+        <div className="relative hidden lg:flex items-center justify-between">
           <Logo size={30} />
           <span className="text-sm text-slate-500">{fmtDay(state.today)}</span>
         </div>
 
-        <div className="mt-10 lg:mt-16 max-w-3xl">
+        <div className="relative lg:mt-16 max-w-3xl">
           <h1 className="cond text-[44px] sm:text-[64px] leading-[0.95] font-semibold tracking-tight text-brand-800">
             {stats.occupied} of {RULES.CAPACITY} beds full.<br />
             {tempsDue} temperatures still to take.<br />
             {goingHome} patients ready to go home.
           </h1>
-          <p className="mt-5 text-[15px] text-slate-600 max-w-xl leading-relaxed">
+          <p className="mt-5 text-[15px] text-slate-700 max-w-xl leading-relaxed">
             Defervo replaces the ward’s paper temperature journal. Nurses, doctors and admin staff each see what’s waiting for them, so no one is measured twice and no bed stays blocked once a patient has gone {RULES.CURE_DAYS} days without a fever.
           </p>
         </div>
 
-        <div className="mt-10 lg:mt-auto lg:pt-12">
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
+        <div className="relative mt-10 lg:mt-auto lg:pt-12"><div className="rounded-xl bg-white/90 backdrop-blur-sm ring-1 ring-rule p-5 sm:p-6 w-fit max-w-full">
+          <p className="text-sm font-semibold text-brand-800 mb-4">Bed status right now</p>
+          <div className="grid grid-cols-1 sm:grid-cols-[repeat(2,auto)] 2xl:grid-cols-[repeat(4,auto)] gap-x-10 2xl:gap-x-8 gap-y-5 w-fit">
             {WARDS.map((w) => (
               <div key={w.id}>
-                <p className="text-sm font-semibold text-brand-800 mb-2">Ward {w.id}</p>
-                <div className="grid grid-cols-10 gap-[3px] sm:gap-1 w-fit">
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Ward {w.id}</p>
+                <div className="grid grid-cols-[repeat(10,auto)] gap-[3px] 2xl:gap-1 w-fit">
                   {Array.from({ length: w.to - w.from + 1 }, (_, i) => w.from + i).map((b) => {
                     const x = beds[b]; const s = x ? x.s : 'free'
-                    return <span key={b} title={`${bedLabel(b)}${x ? ` · ${x.p.name}` : ''} · ${STATUS[s].label}`} className={cx('h-[17px] w-[17px] sm:h-[22px] sm:w-[22px] rounded-[3px]', STATUS[s].cls)} />
+                    return <span key={b} title={`${bedLabel(b)}${x ? ` · ${x.p.name}` : ''} · ${STATUS[s].label}`} className={cx('h-[18px] w-[18px] 2xl:h-[22px] 2xl:w-[22px] rounded-[3px]', STATUS[s].cls)} />
                   })}
                 </div>
               </div>
@@ -74,7 +83,7 @@ export default function Login() {
               <span key={k} className="flex items-center gap-1.5"><span className={cx('h-3 w-3 rounded-[2px]', STATUS[k].cls)} />{STATUS[k].label} <b className="text-slate-800 tabular-nums">{count(k)}</b></span>
             ))}
           </div>
-        </div>
+        </div></div>
       </section>
 
       {/* Shift start */}

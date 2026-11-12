@@ -1,20 +1,18 @@
-/** Defervo mark: a fever curve falling through the 38 °C threshold and settling below it. */
-export function Mark({ size = 28, light }) {
+/** Defervo mark: four daily readings as chart bars. The first two cross the dashed
+ *  38 °C fever line (coral), the last two stay under it (white): the fever is going down. */
+export function Mark({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <rect width="32" height="32" rx="7" fill={light ? '#FFFFFF' : '#1E7250'} />
-      <line x1="5" y1="15" x2="27" y2="15" stroke={light ? '#1E7250' : '#FFFFFF'} strokeOpacity=".35" strokeWidth="1.6" strokeDasharray="2.2 2.2" />
-      <path d="M5.5 8.5 C 10 8.5, 11 11, 13.5 15 S 18 22.5, 22 22.5 L 26.5 22.5" fill="none" stroke="#E5483B" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="26.5" cy="22.5" r="2" fill={light ? '#1E7250' : '#FFFFFF'} />
+      <rect width="32" height="32" rx="8" fill="#1E7250" /><line x1="4" y1="13" x2="28" y2="13" stroke="#FFFFFF" strokeOpacity=".55" strokeWidth="1.4" strokeDasharray="2 2" /><rect x="6" y="6" width="4" height="19" rx="1.4" fill="#FF8A7A" /><rect x="11.5" y="9" width="4" height="16" rx="1.4" fill="#FF8A7A" /><rect x="17" y="16" width="4" height="9" rx="1.4" fill="#FFFFFF" /><rect x="22.5" y="17.5" width="4" height="7.5" rx="1.4" fill="#FFFFFF" />
     </svg>
   )
 }
 
-export function Logo({ light, compact, size = 28 }) {
+export function Logo({ compact, size = 28 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <Mark size={size} light={light} />
-      {!compact && <span className={`cond text-[22px] leading-none font-semibold tracking-tight ${light ? 'text-white' : 'text-brand-700'}`}>Defervo</span>}
+      <Mark size={size} />
+      {!compact && <span className="cond text-[22px] leading-none font-semibold tracking-tight text-brand-700">Defervo</span>}
     </div>
   )
 }
