@@ -5,7 +5,7 @@
 A working prototype built for the FactWise Junior TPM assessment. It replaces the paper temperature journal at a 74-bed virus quarantine and treatment centre with one live app for **nurses, doctors, admin staff and the head doctor**.
 
 ## What it solves
-| Problem today | CareCycle |
+| Problem today | Defervo |
 |---|---|
 | Temperatures taken twice, or not at all | One reading per patient per day, with a live "To measure" queue |
 | Doctors arrive before the temperature is taken | Visits unlock only after the reading. Doctors see a "Ready for visit" queue |
